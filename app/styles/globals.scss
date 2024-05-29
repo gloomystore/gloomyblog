@@ -1,0 +1,410 @@
+@import '@/styles/var.scss';
+@import '@/styles/font.scss';
+@import '@/styles/text.scss';
+@import '@/styles/highlight.scss';
+@import '@/styles/table.scss';
+@import '@/styles/list.scss';
+@import '@/styles/modal.scss';
+
+html {
+  font-size: 16px;
+  line-height: 1.2;
+  font-family: 'NotoSansKR';
+  font-weight: normal;
+  color: #222;
+  scroll-behavior: smooth;
+  background: $-c-black;
+  min-width: 360px;
+  * {
+    box-sizing: border-box;
+  }
+  overflow-y: overlay;
+}
+body {
+  background: url('/images/bg/galaxy.webp');
+  // background-attachment: fixed;
+}
+
+main {
+  min-height: calc(100vh - 480px);
+}
+
+h1,h2,h3,h4,h5,h6,p,strong,b,u,em,i,a {line-height: 1.5;}
+::-webkit-scrollbar {
+  width: 7px;
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  width: 7px;
+  border-radius: 7px;
+  border: 1px solid darkgrey;
+  background: url('/images/bg/galaxy.gif');
+  background-size: 60%;
+  background-position: 0%;
+  background-attachment: fixed;
+}
+
+// .onlyPC {display: block;}
+// .onlyTab {display: none!important;}
+.onlySP {display: none!important;}
+@media(max-width: $breakPoint) {
+  .onlyPC {display: none!important;}
+  .onlySP {display: block!important;}
+}
+.onlyTab {
+  display: block;
+  @media(max-width: $breakPoint2) {
+    display: none!important;
+  }
+}
+
+
+
+
+.opacity0 {opacity: 0!important;visibility: hidden!important;}
+
+h1,h2,h3,h4,h5,h6 {
+  line-height: 1.5;
+  color: #222;
+}
+p {
+  font-size: 1rem;
+  color: #222;
+}
+b, strong {
+  font-weight: bold;
+}
+.txt {
+  margin-top: 10px;
+}
+/* title */
+.title-01,.title-02,.title-03,.title-04,.title-05,.title-06 {font-weight: 900; color: $-c-black;font-family: GangwonEduPowerExtraBoldA;}
+.title-01 {
+  font-size: 2.3rem;
+  line-height: 1.5;
+  margin-top: 30px;
+}
+.title-02 {
+  font-size: 3rem;
+  line-height: 1.5;
+  margin-top: 25px;
+  @media(max-width:$breakPoint){
+    font-size: 1.8rem;
+  }
+}
+.title-03 {
+  font-size: 1.8rem;
+  line-height: 1.5;
+  margin-top: 32px;
+  text-align: center;
+  @media(max-width:$breakPoint){
+    font-size: 1.375rem;
+  }
+}
+.title-04 {
+  font-size: 1.25rem;
+  line-height: 1.5;
+  margin-top: 20px;
+  text-align: center;
+}
+.title-05 {
+  font-size: 1.125rem;
+  line-height: 1.5;
+  margin-top: 20px;
+  text-align: center;
+}
+.title-06 {
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-top: 30px;
+  text-align: center;
+}
+
+.t-red {
+  color: #b62200;
+}
+.t-white {
+  color: $-c-white;
+}
+.t-black {
+  color: $-c-black;
+}
+.t-bold {
+  font-weight: bold;
+}
+.t-light {
+  font-weight: 300;
+}
+.t-center {
+  text-align: center;
+}
+
+.d-block {
+  display: block;
+}
+
+.f-right {
+  float: right;
+}
+.title-area {
+  display: block;
+    padding-left: 20px;
+    padding-right: 20px;
+    margin-top: 20%;
+    @media(max-width:$breakPoint){
+      padding-left: 0;
+      padding-right: 0;
+    }
+    h4, p {
+      font-size: 0.92rem;
+      line-height: 1.8;
+      @media(max-width:$breakPoint){
+        font-size: 0.88rem;
+      }
+    }
+    h4 {
+      font-size: 1.1rem;
+      padding-left: 20px;
+      font-weight: 900;
+      border-left: 3px solid #d2b369;
+    }
+    p {
+      font-size: 0.92rem;
+      text-align: right;
+      &:first-of-type {
+        margin-top: 10px;
+      }
+    }
+}
+.title-area--title {
+  padding-left: 20px;
+  border-left: 3px solid #d2b369;
+  h4 {
+    border: none;
+  }
+  h4, p {
+    padding-left: 0;
+    text-align: left;
+  }
+}
+
+
+
+.ly-flex {
+  display: flex;
+  & > div {
+    flex: 1;
+  }
+}
+.ly-flex-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  @media(max-width: $breakPoint){
+
+  }
+  & > .ly-flex-inner {
+    padding: 20px;
+    width: 50%;
+    text-decoration: none;
+    @media(max-width: $breakPoint){
+      width: 100%;
+      padding: 5px;
+      justify-content: center;
+    }
+  }
+  & > a {
+    padding: 20px;
+    width: 50%;
+    text-decoration: none;
+  }
+  article {
+    margin: auto;
+    &:nth-of-type(1),&:nth-of-type(2) {
+      margin: 0 auto;
+      @media(max-width: $breakPoint){
+        margin: auto;
+      }
+    }
+  }
+}
+.ly-flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.align-center {
+  align-items: center;
+}
+.wrap {
+  position: relative;
+  width: 100%;
+  min-width: 360px;
+  margin: auto;
+}
+
+
+// sizing -------------------
+@function size($start, $end) {
+  $size: ();
+  @for $i from $start through $end {
+    $value: $i + 0;
+    $size: append($size, $value);
+  }
+  @return $size;
+}
+$size: size(0, 100);
+/*******************************************************************************
+    Generate Spacing
+*******************************************************************************/
+
+// Padding, Margin 정의
+// p는 padding, m은 margin을 나타냄.
+// t는 상단 b는 하단 l은 왼쪽 r은 오른쪽의 방향
+// ex )
+//  pt-10 => padding-top:10px
+//  mb-22 => margin-bottom: 22px
+
+$position: (
+  "l": "left",
+  "r": "right",
+  "t": "top",
+  "b": "bottom",
+  "x": "left",
+  "y": "top"
+);
+$spacingNameMap: (
+  "m": "margin",
+  "p": "padding",
+);
+
+@mixin generate($spacingNameMap: (), $position: (), $size: ()) {
+  @each $preKey, $preValue in $spacingNameMap {
+    @each $px in $size {
+      .#{$preKey}-#{$px} {
+        #{$preValue}: #{$px}px !important;
+      }
+      @each $sufKey, $sufValue in $position {
+        .#{$preKey}#{$sufKey}-#{$px} {
+          @if $sufKey == x {
+            #{$preValue}-left: #{$px}px !important;
+            #{$preValue}-right: #{$px}px !important;
+          }@else if $sufKey == y{
+            #{$preValue}-top: #{$px}px !important;
+            #{$preValue}-bottom: #{$px}px !important;
+          }@else{
+              #{$preValue}-#{$sufValue}: #{$px}px !important;
+            }
+
+          }
+      }
+    }
+  }
+}
+
+@include generate($spacingNameMap, $position, $size);
+
+$position: (
+  "left",
+  "right",
+  "top",
+  "bottom",
+);
+@mixin generate($position: (), $size: ()) {
+  @each $eachPosition in $position {
+    @each $px in $size {
+      .#{$eachPosition}-#{$px} {
+        #{$eachPosition}: #{$px}px !important;
+      }
+      .#{$eachPosition}-m#{$px} {
+        #{$eachPosition}: -#{$px}px !important;
+      }
+    }
+  }
+}
+
+@include generate($position, $size);
+.m-auto {margin: auto !important;}
+
+/*******************************************************************************
+    Generate Width
+*******************************************************************************/
+
+// Width 정의
+// ex )
+// w-10 => width:10%
+// w-56 => width:56%
+
+$widthNameMap: (
+  "w": "width",
+);
+@mixin generate($widthNameMap: (), $size: ()) {
+  @each $preKey, $preValue in $widthNameMap {
+    @each $percent in $size {
+      .#{$preKey}-#{$percent} {
+        #{$preValue}: #{$percent}#{'%'} !important;
+      }
+    }
+  }
+}
+@include generate($widthNameMap, $size);
+@each $fontSize in $size {
+  .t-#{$fontSize} {
+    font-size: #{$fontSize}#{'px'} !important;
+  }
+}
+
+$widthPixelNameMap: (
+  "wp": "width",
+);
+@mixin generate($widthPixelNameMap: (), $size: ()) {
+  @each $preKey, $preValue in $widthPixelNameMap {
+    @each $pixel in $size {
+      .#{$preKey}-#{$pixel} {
+        #{$preValue}: #{$pixel}#{'px'} !important;
+      }
+    }
+  }
+}
+@include generate($widthPixelNameMap, $size);
+
+// sizing -------------------
+@function heightSize($start, $end) {
+  $heightSize: ();
+  @for $i from $start through $end {
+    $value: $i * 100;
+    $heightSize: append($heightSize, $value);
+  }
+  @return $heightSize;
+}
+$heightSize: heightSize(1, 10);
+$heightPixelNameMap: (
+  "hp": "height",
+);
+@mixin generate($heightPixelNameMap: (), $heightSize: ()) {
+  @each $preKey, $preValue in $heightPixelNameMap {
+    @each $pixel in $heightSize {
+      .#{$preKey}-#{$pixel} {
+        #{$preValue}: #{$pixel}#{'px'} !important;
+      }
+    }
+  }
+}
+@include generate($heightPixelNameMap, $heightSize);
+
+/* animation */
+.fadeInUp {
+  opacity: 0.1;
+  transform: translateY(50px);
+  transition: all 0.3s ease-in-out 0s;
+  &.active {
+    opacity: 1;
+    transform: translateY(0);
+  } 
+}
+
+.blink {filter: drop-shadow(8px 5px 4px #4444dd); transition: all 0.5s ease-in-out 0s, filter 0.2s ease-in-out 0s;}
+.h-auto {height: auto!important;}
+

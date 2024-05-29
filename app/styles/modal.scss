@@ -1,0 +1,81 @@
+.modal {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  display: block;
+  opacity: 0;
+  visibility: hidden;
+  z-index: 100;
+  transition: all 0.25s ease-in-out;
+  .modal-dimmed {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    background: rgba(0, 0, 0, .6);
+  }
+  .modal-content {
+    position: absolute;
+    bottom: -100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 1200px;
+    background: rgba(200,200,200,0.75);
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    max-height: calc(100% - 50px);
+    padding: 20px 20px;
+    padding-bottom: 16px;
+    transition: bottom 0.2s ease-in-out;
+    // 아이폰일 때: -webkit-touch-callout: none
+    @supports (-webkit-touch-callout: none) {
+      /* iPhone X 이하일 때 */
+      @media only screen and (max-device-width: 812px) and (-webkit-min-device-pixel-ratio: 3) and (orientation: portrait),
+      only screen and (max-device-width: 812px) and (-webkit-min-device-pixel-ratio: 3) and (orientation: landscape) {
+          padding-bottom: calc(constant(safe-area-inset-bottom) + 16px);
+          padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+        /* iPhone X 이상일 때 */
+        @media only screen and (max-device-width: 812px) and (-webkit-min-device-pixel-ratio: 2) and (orientation: portrait),
+        only screen and (max-device-width: 812px) and (-webkit-min-device-pixel-ratio: 2) and (orientation: landscape) {
+          padding-bottom: calc(constant(safe-area-inset-bottom) + 30px);
+          padding-bottom: calc(env(safe-area-inset-bottom) + 30px);
+        }
+      }
+    }
+    h3 {
+      font-size: 20px;
+      font-weight: 900;
+    }
+    .modal-button {
+      margin-top: 25px;
+      width: 100%;
+      button {
+        display: block;
+        width: 100%;
+        text-align: center;
+        padding: 15px 0;
+        border: none;
+        font-size: 18px;
+        font-weight: 900;
+        color: $-c-white;
+        border-radius: 8px;
+        background: #4b2765;
+      }
+    }
+  }
+  &.active {
+    opacity: 1;
+    visibility: visible;
+    .modal-content {
+      bottom: 0;
+    }
+  }
+  pre {
+    white-space: pre-line;
+    line-height: 1.5;
+  }
+}

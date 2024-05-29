@@ -1,0 +1,16 @@
+.dl {
+  dt {
+    font-size: 1.3rem;
+    font-weight: 900;
+    font-family: GangwonEduPowerExtraBoldA;
+    &:not(:first-of-type) {
+      margin-top: 20px;
+    }
+  }
+  dd {
+    margin-top: 20px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+}

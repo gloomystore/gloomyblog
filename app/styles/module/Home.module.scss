@@ -1,0 +1,129 @@
+@import "@/styles/var.scss";
+.intro-area {
+  article {
+    &:nth-of-type(1) {
+      width: 24%;
+    }
+    &:nth-of-type(2) {
+      width: 38%;
+    }
+    &:nth-of-type(3) {
+      width: 38%;
+    }
+    @media(max-width:$breakPoint) {
+      padding: 0 50px;
+      &:nth-of-type(1) {
+        width: 100%;
+      }
+      &:nth-of-type(2) {
+        width: 100%;
+      }
+      &:nth-of-type(3) {
+        width: 100%;
+      }
+    }
+    @media(max-width:600px) {
+      padding: 0;
+    }
+  }
+}
+.img-box {
+  .img {
+    display: block;
+    width: 70%;
+    @media(max-width:$breakPoint) {
+      width: 100%;
+      max-width: 200px;
+      margin: auto;
+    }
+  }
+}
+.catchCopy {
+  font-weight: 100;
+  font-size: 30px;
+  padding-left: 20px;
+  font-family: 'NotoSansKR';
+  @media(max-width:$breakPoint) {
+    margin-top: 30px;
+    font-size: 20px;
+    text-align: center;
+  }
+}
+.icon-area {
+  max-width: 1200px;
+  margin: auto;
+  margin-top: 50px;
+  padding: 24px 50px 50px;
+  border-radius: 30px;
+  @media (max-width: 1200px)
+  {
+    padding: 18px 10px 43px;
+    max-width: calc(100vw - 48px);
+  }
+  > a {
+    transition: 0.3s;
+    display: inline-block;
+    margin-right: 20px;
+    i {
+      color: rgba(200, 200, 200, 0.75);
+      font-size: 30px;
+    
+      &:hover {
+        color: #595959;
+        &::before {
+          filter: drop-shadow(0px 0px 4px rgba(255, 255, 255, 0.99));
+        }
+      }
+    }
+    &:hover {
+      filter: drop-shadow(0px 0px 4px rgba(255, 255, 255, 0.99));
+      // box-shadow: 0 0 10px rgba(255, 255, 255, 0.99);
+    }
+  }
+}
+.desc-img {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  padding: 10px;
+  img {
+    display: block;
+    width: 100%;
+    border: 1px solid $-c-black;
+  }
+}
+.logo-company {
+  > span {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    width: 24px;
+    justify-content: flex-end;
+  }
+  > a {
+    text-decoration: underline;
+    color: #33425a;
+    text-underline-offset : 4px;
+  }
+  img {
+    display: block;
+    width: 24px;
+    position: relative;
+    left: -3px;
+    top: 7px;
+  }
+}
+span.logo-company {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  width: 31px;
+  justify-content: flex-end;
+  img {
+    display: block;
+    width: 31px;
+    position: relative;
+    left: -3px;
+    top: 7px;
+  }
+}

@@ -1,0 +1,12 @@
+// {
+//   "presets": ["next/babel"],
+//   "plugins": [
+//     ["transform-remove-console", { "exclude": ["error"] }]
+//   ]
+// }
+{
+  "presets": ["next/babel"],
+  "plugins": [
+
+  ]
+}

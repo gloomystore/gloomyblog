@@ -1,0 +1,100 @@
+@import '../var.scss';
+.footer {
+  background: url('/images/bg/galaxy.gif');
+  position: relative;
+  margin-top: 200px;
+  background-attachment: fixed;
+  &::after {
+    content: '';
+    position: absolute;
+    top: -100px;
+    display: block;
+    width: 100%;
+    height: 100px;
+    background: url('/images/bg/galaxy.gif');
+    -webkit-mask-image: -webkit-linear-gradient(top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.9));
+    mask-image: -webkit-linear-gradient(top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.9));
+    z-index: 2;
+    background-attachment: fixed;
+  }
+  .footer-inner {
+    position: relative;
+    padding: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    min-height: 150px;
+    align-items: center;
+    max-width: 980px;
+    margin: auto;
+    @media(max-width: $breakPoint) {
+      padding: 10px;
+    }
+  }
+  article {
+    width: 200px;
+    &:nth-of-type(2){
+      width: calc(100% - 200px);
+    }
+    @media(max-width: $breakPoint) {
+      width: 100px;
+      &:nth-of-type(2){
+        width: calc(100% - 100px);
+      }
+      @media(max-width: $breakPoint2) {
+        width: 65px;
+        &:nth-of-type(2){
+          width: calc(100% - 65px);
+        }
+      }
+    }
+    
+  }
+  .footer-logo {
+    padding: 20px;
+    a {
+      display: block;
+      width: 100%;
+      img {
+        width: 100%;
+        height: auto;
+      }
+    }
+    @media(max-width: $breakPoint) {
+      padding: 5px;
+    }
+  }
+  .footer-desc {
+    padding: 10px;
+    @media(max-width: $breakPoint) {
+      padding: 5px;
+    }
+    h5,p {
+      color: #fff;
+      line-height: 2.3;
+    }
+    h5 {
+      font-family: GangwonEduPowerExtraBoldA;
+      em {
+        position: absolute;
+        right: 23px;
+        @media(max-width: $breakPoint) {
+          right: 13px;
+        }
+        span {
+          font-weight: 100;
+          margin-left: 5px;
+          color: #fff9b4;
+          &:nth-of-type(2) {
+            color: #ff9e9c;
+          }
+        }
+      }
+    }
+    p {
+      font-weight: 100;
+    }
+    a {
+      color: #fff;
+    }
+  }
+}

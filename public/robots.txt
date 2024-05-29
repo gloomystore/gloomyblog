@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+User-agent: Yeti
+Allow: /
+Sitemap: https://www.gloomy-store.com/sitemap.xml

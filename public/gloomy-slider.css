@@ -1,0 +1,89 @@
+.anchor {
+  display: block;
+  width: 100%;
+}
+.img {
+  display: block;
+  width: 100%;
+  z-index: -1
+}
+
+.G-slider-container {
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  overflow: hidden;
+  list-style: none;
+  padding: 0;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  touch-action: pan-y
+}   
+/*
+.G-slider-container .G-slider-slide {
+  transition: 0.5s;
+} 
+*/
+.G-slider-container *:active {
+  cursor: grabbing;
+  touch-action: pan-y
+} 
+.img:active {
+  cursor: grabbing;
+  touch-action: pan-y
+} 
+.anchor:active {
+  cursor: grabbing;
+  touch-action: pan-y
+} 
+.G-slider-wrapper {
+  position: relative;
+  transition: 0.5s;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  display: flex;
+  transition-property: transform;
+  transition-timinG-function: initial;
+  box-sizing: content-box;
+} 
+.G-slider {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 18px;
+  background: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  transition-property: transform;
+}
+
+.G-slider-pagination {
+  position: absolute;
+  text-align: center;
+  transition: .3s opacity;
+  transform: translate3d(0,0,0);
+  z-index: 10;
+  
+  bottom: 8px;
+  left: 0;
+  width: 100%;
+}
+
+.G-slider-pagination-bullet {
+  width: 8px;
+  height: 8px;
+  display: inline-block;
+  border-radius: 50%;
+  background: #000;
+  opacity: 0.2;
+  cursor: pointer;
+}
+.G-slider-pagination-active {
+  background: #fff;
+  opacity: 0.8
+}
