@@ -10,28 +10,98 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios'
 
 import Header from '@/pages/components/Header'
+import pool from './api/db/mysql';
+import { RowDataPacket } from 'mysql2';
+import Link from 'next/link';
+import { strip_tags } from '@/utils/common';
 
 export const getServerSideProps = async() => {
   try {
-    const { data } = await axios.get(process.env.NEXT_PUBLIC_API_URL + '/dummy/getBoardData.json')
+    // const { data } = await axios.get(process.env.NEXT_PUBLIC_API_URL + '/dummy/getBoardData.json')
+    const page = 1
+    const pageSize = 9
+    const offset = (page - 1) * pageSize
+    const [documentRows] = await pool.query<RowDataPacket[]>(`
+      SELECT blamed_count,
+      category_srl,
+      module_srl,
+      comment_count,
+      comment_status,
+      content,
+      document_srl,
+      email_address,
+      last_update,
+      member_srl,
+      readed_count,
+      regdate,
+      status,
+      tags,
+      thumb,
+      title,
+      uploaded_count,
+      user_id,
+      user_name,
+      voted_count
+      FROM xe_documents
+      WHERE module_srl IN (214, 52)
+      ORDER BY regdate DESC
+      LIMIT ${pageSize} OFFSET ${offset}
+    `)
+    // strip_tags
+
+    const limit200 = (str:string) => {
+      return str.slice(0, 200)
+    }
+    const rows = documentRows.map((e:any) => ({...e, content: limit200(strip_tags(e.content))}))
+
+    const [totalRows] = await pool.query<RowDataPacket[]>(`
+      SELECT COUNT(*) as total
+      FROM xe_documents
+      WHERE module_srl IN (214, 52)
+    `);
+    const totalCount = totalRows[0].total;
+
+    // 총 페이지 수를 계산합니다
+    const totalPages = Math.ceil(totalCount / pageSize)
+
+
+    const documents = {
+      data: rows,
+      page: {
+        currentPage: 1,
+        totalPages
+      }
+    }
     return {
       props: {
-        boardData: data
+        documents: JSON.stringify(documents)
       }
     }
   } catch(er) {
     console.log(er)
     return {
       props: {
-        boardData: 'error'
+        documents: JSON.stringify({
+          data: [],
+          page: {
+            currentPage: 0,
+            totalPages: 0
+          }
+        })
       }
     }
   }
 }
 
 export default function Home({
-  boardData = []
-}:{boardData:any[]}) {
+  documents = {
+    data: [],
+    page: {
+      currentPage: 0,
+      totalPages: 0
+    }
+  }
+}:{documents:any}) {
   // 로딩
   const [scrollBlock, setScrollBlock] = useRecoilState(ScrollBlockAtom);
   const [load, setLoad] = useRecoilState(LoadAtom)
@@ -48,37 +118,42 @@ export default function Home({
   const profileView = useCallback((id:string) => {
 
   }, [profileId])
-
+  const initialState = useMemo(() => ({
+    data: [],
+    page: {
+      currentPage: 0,
+      totalPages: 0
+    }
+  }), [])
+  const [document, setDocument] = useState(initialState)
   useEffect(() => {
-    console.log(boardData)
-  },[boardData])
+    const res = JSON.parse(documents)
+    setDocument(res)
+  },[documents])
 
-
+  const getBoardData = useCallback(async(page:number) => {
+    try {
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/board/all/${page}`)
+      if(res.status === 200) {
+        setDocument(res.data)
+      } else throw new Error('network failed')
+    } catch(err) {
+      console.log(err)
+      setDocument(initialState)
+    }
+  }, [])
 
 
 
   const pages = [1, 2]; // 페이지 번호 예시
 
-const getBoardPage = (page: number, moduleSrl: string) => {
-  console.log(`Load page ${page} for module ${moduleSrl}`);
-};
+  const getBoardPage = (page: number, moduleSrl: string) => {
+    console.log(`Load page ${page} for module ${moduleSrl}`);
+  };
 
-const getBoardPageBtn = (direction: string, moduleSrl: string) => {
-  console.log(`Load page in direction ${direction} for module ${moduleSrl}`);
-};
-const galleryItems:any[] = [
-  {
-    id: 1,
-    link: '/board/board.php?document_srl=1027&module_srl=52&view_all=1#title',
-    title: '아이폰 safe-area 대응하기 (아이폰 X 이상, 이하 구분하기)',
-    thumbnail: '/images/board/1027/thumb.jpg',
-    module: 'development',
-    about: '아이폰 safe-area 대응하기 (아이폰 X...',
-    text: '@supports (-webkit-touch-callout: none) { /*아이폰 전체*/ paddin...',
-    date: '2023.09.11',
-    moduleLink: '/board/index.php?module_srl=52&view_all=0#title',
-  },
-]
+  const getBoardPageBtn = (direction: string, moduleSrl: string) => {
+    console.log(`Load page in direction ${direction} for module ${moduleSrl}`);
+  };
 
 
   return (
@@ -108,18 +183,18 @@ const galleryItems:any[] = [
                 </h2>
               </div>
               <div className='gallery' id='gallery'>
-                {boardData.length && boardData?.map((item:any, idx) => (
+                {document && document?.data?.length && document?.data?.map((item:any, idx) => (
                   <div key={idx + 'card' + item.id} className='card_wrapper js-fadeIn' itemProp='workExample'>
                     <a
-                      href={item.link}
+                      href={'#!'}
                       title={item.title}
                       className='card'
                     >
                       <p className='thumbnail'>
                         <img
-                          src={item.thumbnail}
+                          src={`/images/file/board/${item.document_srl}/thumb.${item.thumb}`}
                           alt='thumbnail'
-                          onError={(e) => (e.currentTarget.src = '/images/flower6.jpg')}
+                          onError={(e) => (e.currentTarget.src = '/images/header2_3.webp')}
                         />
                       </p>
                       <div className='script'>
@@ -127,19 +202,19 @@ const galleryItems:any[] = [
                           <span>{item.module}</span>
                         </p> */}
                         <p className='title' itemProp='about'>
-                          {item.about}
+                          {item.title}
                         </p>
                         <p className='text'>
-                          {item.text}
+                          {strip_tags(item.content)}
                         </p>
                         <p className='date' itemProp='datePublished'>
-                          <span>{item.date}</span>
+                          <span>{item.regdate}</span>
                         </p>
                       </div>
                     </a>
-                    <a href={item.moduleLink} title='게시판으로' className='module_float'>
-                      <span>{item.module}</span>
-                    </a>
+                    <Link href={`/board/${item.module_srl}/1`} title='게시판으로' className='module_float'>
+                      {item.module_srl === 52 ? 'development' : 'daily'}
+                    </Link>
                   </div>
                 ))}
               </div>
@@ -148,7 +223,7 @@ const galleryItems:any[] = [
                   type='button'
                   className='arrow_btn double first'
                   aria-label='arrow_btn_double_first'
-                  onClick={() => getBoardPage(1, 'module_srl')}
+                  onClick={() => getBoardData(1)}
                 >
                   <i className='fa fa-angle-double-left'></i>
                 </button>
@@ -168,7 +243,7 @@ const galleryItems:any[] = [
                       type='button'
                       className={`paging_btn ${page === 1 ? 'active' : ''}`}
                       aria-label={`paging_btn_${page}`}
-                      onClick={() => getBoardPage(page, 'module_srl')}
+                      onClick={() => getBoardData(page)}
                     >
                       <i className='fa'>{page}</i>
                     </button>

@@ -20,7 +20,7 @@
     }
     .card_wrapper {
       width: 31%;
-      height: 545px;
+      height: 513px;
       background-size: cover;
       background-position: center;
       position: relative;
@@ -47,10 +47,6 @@
           margin-right: 0;
         }
       }
-      &:hover .thumbnail img {
-        transform: scale(1.2);
-      }
-
       .card {
         .thumbnail {
           height: 45%;
@@ -67,7 +63,7 @@
   
         .script {
           height: 55%;
-          padding: 7%;
+          padding: 18px 23px;
           p {
             color: $-c-black;
           }
@@ -80,7 +76,7 @@
           .title {
             font-size: 22px;
             font-weight: 800;
-            padding-top: 35px;
+            padding-top: 27px;
             padding-bottom: 5px;
             max-height: 95px;
             display: -ms-flexbox;
@@ -97,7 +93,7 @@
           .text {
             font-size: 18px;
             font-weight: 300;
-            padding-bottom: 15px;
+            // padding-bottom: 15px;
             height: calc(38.5454% + 15px);
             max-height: 115px;
             display: -ms-flexbox;
@@ -118,20 +114,23 @@
           }
         }
       }
-
+      &:hover {
+        .card {
+          .thumbnail img {
+            transform: scale(1.3);
+          }
+        }
+      }
       .module_float {
         font-size: 15px;
         color: #f82c47;
         padding-bottom: 5px;
         position: absolute;
-        top: 45%;
+        top: 226px;
         margin-top: 7%;
         left: 7%;
         line-height: 1.5;
-
-        span {
-          display: inline-block;
-        }
+        font-weight: 700;
       }
     }
 

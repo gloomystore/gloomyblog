@@ -34,26 +34,26 @@ export default function Header() {
             </li>
             <li className='active'>
               <a
-                href='/board/index.php?module_srl=module_srl&view_all=1'
-                title='blog'
-              >
-                <span className='t-purple'>b</span>log
-              </a>
-            </li>
-            <li>
-              <a
-                href='/board/index.php?module_srl=52&view_all=0'
+                href='/board/52/1'
                 title='dev'
               >
-                de<span className='t-green'>v</span>
+                <span className='t-purple'>d</span>ev
               </a>
             </li>
             <li>
               <a
-                href='/board/index.php?module_srl=216&view_all=0'
+                href='/board/214/1'
                 title='dayz'
               >
-                d<span className='t-sky'>a</span>yz
+                d<span className='t-green'>a</span>yz
+              </a>
+            </li>
+            <li>
+              <a
+                href='/board/52/1'
+                title='comment'
+              >
+                방명<span className='t-sky'>록</span>
               </a>
             </li>
           </ul>
@@ -74,7 +74,7 @@ export default function Header() {
         </div>
         <div className='profile-script'>
           <h2>글루미스토어</h2>
-          <p>프론트엔드 개발 블로그입니다. php로 개발되었습니다.</p>
+          <p>프론트엔드 개발 블로그입니다. Nextjs 14로 개발되었습니다.</p>
         </div>
       </div>
     </header>
