@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -18,47 +14,21 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "allowImportingTsExtensions": true,
     "baseUrl": ".",
+    "allowImportingTsExtensions": true,
     "paths": {
-      "@/components/*": [
-        "app/components/*"
-      ],
-      "@/public/*": [
-        "public/*"
-      ],
-      "@/styles/*": [
-        "app/styles/*"
-      ],
-      "@/pages/*": [
-        "app/pages/*"
-      ],
-      "@/store/*": [
-        "app/store/*"
-      ],
-      "@/test/*": [
-        "app/test/*"
-      ],
-      "@/assets/*": [
-        "app/assets/*"
-      ],
-      "@/api/*": [
-        "app/api/*"
-      ]
-    },
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
+      "@/components/*": ["pages/components/*"],
+      "@/public/*": ["public/*"],
+      "@/styles/*": ["styles/*"],
+      "@/pages/*": ["pages/*"],
+      "@/store/*": ["store/*"],
+      "@/test/*": ["test/*"],
+      "@/assets/*": ["assets/*"],
+      "@/api/*": ["pages/api/*"],
+      "@/type/*": ["type/*"],
+      "@/utils/*": ["utils/*"],
+    }
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
 }

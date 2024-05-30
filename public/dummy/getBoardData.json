@@ -1,0 +1,35 @@
+[
+  {
+    "id":1,
+    "link":"/board/board.php?document_srl=1027&module_srl=52&view_all=1#title",
+    "title":"아이폰 safe-area 대응하기 (아이폰 X 이상, 이하 구분하기)",
+    "thumbnail":"/images/board/1027/thumb.jpg",
+    "module":"development",
+    "about":"아이폰 safe-area 대응하기 (아이폰 X...",
+    "text":"@supports (-webkit-touch-callout: none) { /*아이폰 전체*/ paddin...",
+    "date":"2023.09.11",
+    "moduleLink":"/board/index.php?module_srl=52&view_all=0#title"
+  },
+  {
+    "id":2,
+    "link":"/board/board.php?document_srl=1027&module_srl=52&view_all=1#title",
+    "title":"아이폰 safe-area 대응하기 (아이폰 X 이상, 이하 구분하기)",
+    "thumbnail":"/images/board/1027/thumb.jpg",
+    "module":"development",
+    "about":"아이폰 safe-area 대응하기 (아이폰 X...",
+    "text":"@supports (-webkit-touch-callout: none) { /*아이폰 전체*/ paddin...",
+    "date":"2023.09.11",
+    "moduleLink":"/board/index.php?module_srl=52&view_all=0#title"
+  },
+  {
+    "id":3,
+    "link":"/board/board.php?document_srl=1027&module_srl=52&view_all=1#title",
+    "title":"아이폰 safe-area 대응하기 (아이폰 X 이상, 이하 구분하기)",
+    "thumbnail":"/images/board/1027/thumb.jpg",
+    "module":"development",
+    "about":"아이폰 safe-area 대응하기 (아이폰 X...",
+    "text":"@supports (-webkit-touch-callout: none) { /*아이폰 전체*/ paddin...",
+    "date":"2023.09.11",
+    "moduleLink":"/board/index.php?module_srl=52&view_all=0#title"
+  }
+]

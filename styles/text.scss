@@ -1,0 +1,73 @@
+.light{font-weight: 100;}
+.bold{font-weight: 700;}
+.italic{font-style: italic!important;}
+.c-black {
+  color: $-c-black;
+}
+.c-lightgrey {
+  color: $-c-lightgrey;
+}
+.t-left {text-align: left!important;}
+.t-right {text-align: right!important;}
+
+.t-beige {
+  color: $-c-beige !important;
+}
+
+.t-red {
+  color: $-c-red !important;
+}
+
+.t-green {
+  color: $-c-green !important;
+}
+
+.t-purple {
+  color: $-c-purple !important;
+}
+
+.t-sky {
+  color: $-c-sky !important;
+}
+
+.deco {
+  color: $-c-purple !important;
+  a {
+    font-size: 30px;
+    span {
+      background: $-c-purple;
+      color: $-c-beige;
+      font-size: inherit;
+    }
+  }
+}
+
+.blinkRed {
+  animation: blinkRed 1s linear 0s;
+}
+
+@keyframes blinkRed {
+  50% {
+    color: #ea5e6a !important;
+  }
+}
+@keyframes blinkBeige {
+  50% {
+    color: #e1d0c9 !important;
+  }
+}
+@keyframes blinkGreen {
+  50% {
+    color: #00ffb8 !important;
+  }
+}
+@keyframes blinkPruple {
+  50% {
+    color: #5d77e9 !important;
+  }
+}
+@keyframes blinkSky {
+  50% {
+    color: #40cee1 !important;
+  }
+}

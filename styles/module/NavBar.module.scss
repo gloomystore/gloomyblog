@@ -9,7 +9,7 @@
   z-index: 50;
   background: rgba(0, 0, 0, 0.5);
   transition: opacity 0.2s linear 0s;
-  &.active {
+  &.darker, &.active {
     background: rgba(0, 0, 0, 0.75);
   }
   @media(max-width: $breakPoint){
@@ -36,10 +36,13 @@
     li {
       position: relative;
       padding: 0 15px;
+      display: flex;
+      align-items: center;
       &:not(:last-of-type)::after {
         content: '';
         position: absolute;
-        top: 2px;
+        top: 50%;
+        transform: translateY(-50%);
         right: 0px;
         width: 1px;
         height: 18px;
@@ -49,6 +52,49 @@
         color: #fff;
         font-size: 1.3rem;
         font-weight: 700;
+      }
+      &.join {
+        > div {
+          display: flex;
+          flex-direction: column;
+          a {
+            font-size: 12px;
+          }
+        }
+      }
+      &.login {
+        > button {
+          display: inline-block;
+          width: 36px;
+          border-radius: 50%;
+          overflow: hidden;
+          img {
+            display: block;
+            width: 100%;
+          }
+        }
+        .submenu {
+          position: absolute;
+          bottom: 0;
+          transition: 0.3s;
+          opacity: 0;
+          visibility: hidden;
+          right: 0;
+          background: rgba(0, 0, 0, 0.7);
+          a {
+            font-size: 13px;
+            width: 120px;
+            padding: 7px 10px;
+            display: inline-block;
+          }
+        }
+        &.opened {
+          .submenu {
+            bottom: -70px;
+            opacity: 1;
+            visibility: visible;
+          }
+        }
       }
     }
   }
@@ -129,6 +175,49 @@
             color: #fff;
             font-size: 1.3rem;
             font-weight: 700;
+          }
+          &.join {
+            > div {
+              display: flex;
+              flex-direction: column;
+              a {
+                font-size: 12px;
+              }
+            }
+          }
+          &.login {
+            > button {
+              display: inline-block;
+              width: 36px;
+              border-radius: 50%;
+              overflow: hidden;
+              img {
+                display: block;
+                width: 100%;
+              }
+            }
+            .submenu {
+              position: absolute;
+              bottom: 0;
+              transition: 0.3s;
+              opacity: 0;
+              visibility: hidden;
+              right: 0;
+              background: rgba(0, 0, 0, 0.7);
+              a {
+                font-size: 13px;
+                width: 120px;
+                padding: 7px 10px;
+                display: inline-block;
+              }
+            }
+            &.opened {
+              .submenu {
+                bottom: -70px;
+                opacity: 1;
+                visibility: visible;
+              }
+            }
           }
         }
       }

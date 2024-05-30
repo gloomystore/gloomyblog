@@ -1,5 +1,10 @@
+@import '@/styles/reset.css';
+@import '@/styles/icomoon.css';
 @import '@/styles/var.scss';
+@import '@/styles/cyworld.scss';
+@import '@/styles/card.scss';
 @import '@/styles/font.scss';
+@import '@/styles/font-awesome.min.css';
 @import '@/styles/text.scss';
 @import '@/styles/highlight.scss';
 @import '@/styles/table.scss';
@@ -21,7 +26,8 @@ html {
   overflow-y: overlay;
 }
 body {
-  background: url('/images/bg/galaxy.webp');
+  // background: url('/images/bg/galaxy.webp');
+  background: url('/images/bg/bg.jpg');
   // background-attachment: fixed;
 }
 
@@ -62,6 +68,13 @@ h1,h2,h3,h4,h5,h6,p,strong,b,u,em,i,a {line-height: 1.5;}
 
 
 .opacity0 {opacity: 0!important;visibility: hidden!important;}
+.invisible {
+  width: 0;
+  height: 0;
+  visibility: hidden;
+  margin: 0;
+  padding: 0;
+}
 
 h1,h2,h3,h4,h5,h6 {
   line-height: 1.5;
@@ -188,6 +201,27 @@ b, strong {
   }
 }
 
+.paging {
+  width: 100%;
+  height: auto;
+  border-top: 1px solid transparent;
+  display: flex;
+  justify-content: center;
+  padding: 35px 0 35px;
+  .paging_btn, .arrow_btn {
+    border: 1px solid #5f6d7e;
+    background: #5f6d7e;
+    color: #c9c9c9;
+    padding: 5px 10px;
+    margin: 0 3px;
+  }
+  .paging_btn {
+    &.active {
+      color: #555;
+      background: #fff;
+    }
+  }
+}
 
 
 .ly-flex {
