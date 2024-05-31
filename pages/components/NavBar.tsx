@@ -9,7 +9,8 @@ import Link from 'next/link'
 
 export default function NavBar() {
   // const router = useRouter()
-  const [isSubmenu,setIsSubmenu] = useState(true)
+  const [initialLoaded,setInitialLoaded] = useState(false)
+  const [isSubmenu,setIsSubmenu] = useState(false)
   const [navActive,setNavActive] = useState(false)
   const [navDarker,setNavDarker] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -44,8 +45,17 @@ export default function NavBar() {
     setNavActive(!navActive)
   }
 
-  const myInfo = useRecoilValue(MyInfoAtom)
-  const isAdmin = useRecoilValue(IsAdminAtom)
+  const [myInfo, setMyInfo] = useRecoilState(MyInfoAtom)
+  const [isAdmin, setIsAdmin] = useRecoilState(IsAdminAtom)
+  // isAdmin, myOnfo를 hydration 없이 csr로 적용
+  const [isLogin, setIsLogin] = useState(false)
+  const [stateIsAdmin, setStatesAdmin] = useState(false)
+  useEffect(() => {
+    setStatesAdmin(isAdmin)
+  }, [isAdmin])
+  useEffect(() => {
+    setIsLogin(!!myInfo)
+  }, [myInfo])
 
   /** redux */
   const [scrollBlock, setScrollBlock] = useRecoilState(ScrollBlockAtom);
@@ -53,16 +63,17 @@ export default function NavBar() {
   const [scrollStyle,setScrollStyle] = useState(` `)
 
   useEffect(() => {
-    if(!load) return
-    setScrollBlock(navActive) // redux에 test라는 state에 babo1을 넣는다.
-  }, [navActive,load])
+    if(!initialLoaded) return
+    setScrollBlock(navActive)
+    if(!navActive) setIsSubmenu(navActive)
+  }, [navActive, initialLoaded])
 
   useEffect(() => {
-    if(!load) return
+    console.log('scrollBlock', scrollBlock)
+    // if(!load) return
     if(scrollBlock){
       setScrollStyle(`
       html {
-        height: 100vh;
         overflow-y: hidden;
         background: url('/images/bg/galaxy.webp');
       }
@@ -73,119 +84,123 @@ export default function NavBar() {
   }, [scrollBlock])
   /** //redux */
 
-  function goHome(){
-    if(window.scrollY < 2) {
-      window.location.reload()
-    } else {
-      window.scrollTo(0,0); setNavActive(false)
-    }
-  }
+  useEffect(() => {
+    setInitialLoaded(true)
+  }, [])
 
- 
+  const logout = useCallback(() => {
+    setIsAdmin(null)
+    setMyInfo(null)
+  }, [myInfo, isAdmin])
 
   return (
-    <>
-      <nav className={`${styles['nav']}
-      ${navActive && styles['active']}
-      ${navDarker && styles['darker']}
-      `}>
-        <h2 className={`${styles['nav-logo']}`}>
-          <Link href='/' title='홈페이지로 이동' className={`${styles['navv']} img-box`}>
-            {/* <Image src={require('/public/images/logo2.png')} alt='logo' className='onlyPC' />
-            <Image src={require('/public/images/logo3.png')} alt='logo' className='onlySP' /> */}
-            <img src='/images/logo2.png' alt='logo' className='onlyPC' />
-            <img src='/images/logo3.png' alt='logo' className='onlySP' />
-          </Link>
-        </h2>
-        <ul className={`${styles['nav-list']} onlyPC`}>
-          <li>
-            <Link href='/board/52/1#title'>개발일지</Link>
-          </li>
-          <li>
-            <Link href='/board/214/1#title'>일상</Link>
-          </li>
-          <li>
-            <Link href='https://www.gloomy-store.com' target='_blnk'>Portfolio</Link>
-          </li>
-          <li>
-            <Link href='#!'>I like it</Link>
-          </li>
-          {
-            !myInfo && <li className={styles['join']}>
-            <div>
-              <Link href='#!'>로그인</Link>
-              <Link href='#!'>회원가입</Link>
-            </div>
-          </li>
-          }
-          {
-            myInfo && <li className={`${styles['login']} ${isSubmenu && styles['opened']}`}>
-            <button className={styles['profile']} onClick={handleSubmenu}>
-              <img src='/images/members/uptownboy7/profile.jpg' alt='profile' />
-            </button>
-            <div className={styles['submenu']}>
-              <Link href='#!'>회원정보 변경</Link>
-              <Link href='#!'>쪽지함</Link>
-              {
-                isAdmin && <Link href='#!'>글쓰기</Link>
-              }
-            </div>
-          </li>
-          }
-        </ul>
-        <div className={`${styles['nav-inner']} onlySP`}>
-          <button className={navActive ? `${styles['nav-hamburger']} ${styles['active']} onlySP` : `${styles['nav-hamburger']} onlySP`} onClick={handleNav} title='메뉴 열기/닫기'>
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
-          <article className={navActive ? `${styles['nav-menu']} ${styles['active']}` : `${styles['nav-menu']}`}>
-            <ul className={`${styles['nav-list-mobile']}`}>
+    
+      initialLoaded && (
+        <>
+          <nav className={`${styles['nav']}
+          ${navActive && styles['active']}
+          ${navDarker && styles['darker']}
+          `}>
+            <h2 className={`${styles['nav-logo']}`}>
+              <Link href='/' title='홈페이지로 이동' className={`${styles['navv']} img-box`}>
+                {/* <Image src={require('/public/images/logo2.png')} alt='logo' className='onlyPC' />
+                <Image src={require('/public/images/logo3.png')} alt='logo' className='onlySP' /> */}
+                <img src='/images/logo2.png' alt='logo' className='onlyPC' />
+                <img src='/images/logo3.png' alt='logo' className='onlySP' />
+              </Link>
+            </h2>
+            <ul className={`${styles['nav-list']} onlyPC`}>
               <li>
-                <Link href='/board/52/1#title'>개발일지</Link>
+                <Link href='/board/52/page/1#title'>개발일지</Link>
               </li>
               <li>
-                <Link href='/board/214/1#title'>일상</Link>
+                <Link href='/board/214/page/1#title'>일상</Link>
               </li>
               <li>
-                <Link href='https://www.gloomy-store.com'>Portfolio</Link>
+                <Link href='https://www.gloomy-store.com' target='_blnk'>Portfolio</Link>
               </li>
               <li>
-                <Link href='#!'>I like it</Link>
+                <Link href=':'>I like it</Link>
               </li>
               {
-                !myInfo && <li className={styles['join']}>
+                !isLogin && <li className={styles['join']}>
                 <div>
-                  <Link href='#!'>로그인</Link>
-                  <Link href='#!'>회원가입</Link>
+                  <Link href='/login'>로그인</Link>
+                  <Link href='/join'>회원가입</Link>
                 </div>
               </li>
               }
               {
-                myInfo && <li className={`${styles['login']} ${isSubmenu && styles['opened']}`}>
+                isLogin && <li className={`${styles['login']} ${isSubmenu && styles['opened']}`}>
                 <button className={styles['profile']} onClick={handleSubmenu}>
                   <img src='/images/members/uptownboy7/profile.jpg' alt='profile' />
                 </button>
                 <div className={styles['submenu']}>
-                  <Link href='#!'>회원정보 변경</Link>
-                  <Link href='#!'>쪽지함</Link>
+                  <Link href=':'>회원정보 변경</Link>
+                  <Link href=':'>쪽지함</Link>
+                  <button onClick={logout}>로그아웃</button>
                   {
-                    isAdmin && <Link href='#!'>글쓰기</Link>
+                    stateIsAdmin && <Link href=':'>글쓰기</Link>
                   }
                 </div>
               </li>
               }
             </ul>
-          </article>
-        </div>
-      </nav>
-      {
-        scrollBlock &&
-        <style>
-          {scrollStyle}
-        </style>
-      }
-      
-    </>
+            <div className={`${styles['nav-inner']} onlySP`}>
+              <button className={navActive ? `${styles['nav-hamburger']} ${styles['active']} onlySP` : `${styles['nav-hamburger']} onlySP`} onClick={handleNav} title='메뉴 열기/닫기'>
+                <span></span>
+                <span></span>
+                <span></span>
+              </button>
+              <article className={navActive ? `${styles['nav-menu']} ${styles['active']}` : `${styles['nav-menu']}`}>
+                <ul className={`${styles['nav-list-mobile']}`}>
+                  <li>
+                    <Link href='/board/52/page/1#title'>개발일지</Link>
+                  </li>
+                  <li>
+                    <Link href='/board/214/page/1#title'>일상</Link>
+                  </li>
+                  <li>
+                    <Link href='https://www.gloomy-store.com'>Portfolio</Link>
+                  </li>
+                  <li>
+                    <Link href=':'>I like it</Link>
+                  </li>
+                  {
+                    !isLogin && <li className={styles['join']}>
+                    <div>
+                      <Link href='/login'>로그인</Link>
+                      <Link href='/join'>회원가입</Link>
+                    </div>
+                  </li>
+                  }
+                  {
+                    isLogin && <li className={`${styles['login']} ${isSubmenu && styles['opened']}`}>
+                    <button className={styles['profile']} onClick={handleSubmenu}>
+                      <img src='/images/members/uptownboy7/profile.jpg' alt='profile' />
+                    </button>
+                    <div className={styles['submenu']}>
+                      <Link href=':'>회원정보 변경</Link>
+                      <Link href=':'>쪽지함</Link>
+                      {
+                        stateIsAdmin && <Link href=':'>글쓰기</Link>
+                      }
+                    </div>
+                  </li>
+                  }
+                </ul>
+              </article>
+            </div>
+          </nav>
+          {
+            scrollBlock &&
+            <style>
+              {scrollStyle}
+            </style>
+          }
+          
+        </>
+      )
+    
   )
 }

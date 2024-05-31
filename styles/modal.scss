@@ -66,12 +66,79 @@
         background: #4b2765;
       }
     }
+    &.modal-profile {
+      width: 100%;
+      max-width: 400px;
+      margin: auto;
+      background: none;
+      bottom: 40%;
+      transform: translate(-50%, 50%);
+      .photo-zone {
+        display: inline-block;
+        padding: 0 75px;
+        @media(max-width: 600px) {
+          padding: 0 15px;
+        }
+        button {
+          background: none;
+          border-radius: 50%;
+          overflow: hidden;
+          img {
+            display: inline-block;
+            width: 100%;
+            transition: 0.2s;
+            &:hover {
+              transform: scale(1.5);
+            }
+          }
+        }
+        
+      }
+      .script-zone {
+        position: relative;
+        text-align: center;
+        padding: 18px;
+        background: #fff;
+        h4 {
+          font-size: 20px;
+          font-weight: 700;
+          span {
+            font-size: 16px;
+          }
+        }
+        .modal-button {
+          position: absolute;
+          margin: 0;
+          top: -68px;
+          right: 15px;
+          display: block;
+          width: 60px;
+          height: 60px;
+          button {
+            position: relative;
+            font-size: 60px;
+            line-height: 1;
+            padding: 0;
+            border-radius: 0;
+            background: none;
+            transition: 0.3s;
+            &:hover {
+              transform: rotate(180deg);
+              top: 4px;
+            }
+          }
+        }
+      }
+    }
   }
   &.active {
     opacity: 1;
     visibility: visible;
     .modal-content {
       bottom: 0;
+      &.modal-profile {
+        bottom: 50%;
+      }
     }
   }
   pre {

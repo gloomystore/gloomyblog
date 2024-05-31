@@ -15,7 +15,7 @@ export default function Footer({statistics}:any) {
   useEffect(() => {
     const getIp = async() => {
       try {
-        const res = await axios.get('https://open.gloomy-store.com/getIp.php')
+        const res = await axios.get('https://blog.gloomy-store.com/getIp.php')
         if(res.status === 200) {
           setIpaddr(res.data)
         } else {

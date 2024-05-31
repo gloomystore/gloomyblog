@@ -19,7 +19,7 @@
         height: 35px;
         background: url(/images/bg/galaxy.gif);
         -webkit-mask-image: -webkit-linear-gradient(top, rgb(0, 0, 0), rgba(0, 0, 0, 0));
-        mask-image: -webkit-linear-gradient(top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0));
+        mask-image: -webkit-linear-gradient(top, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0));
         z-index: 1;
       }
       h2 {

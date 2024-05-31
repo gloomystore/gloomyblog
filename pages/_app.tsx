@@ -7,8 +7,9 @@ import Footer from "@/components/Footer";
 export default function App({ Component, pageProps }: AppProps) {
   return <RecoidContextProvider>
       <AuthChecker />
+      <ProfileModal />
       <NavBar />
-        <Component {...pageProps} />
+      <Component {...pageProps} />
       <Footer />
     </RecoidContextProvider>
 }
@@ -18,6 +19,7 @@ import { useRecoilState } from "recoil";
 import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/router";
+import ProfileModal from "./components/ProfileModal";
 
 
 const AuthChecker = () => {
@@ -27,7 +29,7 @@ const AuthChecker = () => {
   const [myInfo, setMyInfo] = useRecoilState(MyInfoAtom)
   const setClientHeaders = useCallback(() => {
     axios.interceptors.request.use((req) => {
-      const token = localStorage?.getItem('Authorization')
+      const token = localStorage?.getItem('accessToken')
       if (token) { req.headers.Authorization = token }
       return new Promise((resolve) => resolve(req))
     }, (error) => {
@@ -36,7 +38,7 @@ const AuthChecker = () => {
     axios.interceptors.response.use((res) => {
       if (res.headers.authorization) {
         if (!myInfo) return Promise.reject('error')
-        localStorage.setItem('Authorization', res.headers.authorization)
+        localStorage.setItem('accessToken', res.headers.authorization)
         setMyInfo(res.headers.authorization)
       }
       return new Promise((resolve) => resolve(res))
@@ -47,14 +49,18 @@ const AuthChecker = () => {
       let message = response?.data?.message
       if (response?.status >= 500) {
         // 500번대
-        message = '로그인 확인 불가'
+        message = '서버 확인 불가'
       } else {
         // 400번대
         if (response?.status === 404) {
-          message = '로그인 확인 불가'
+          message = '페이지 확인 불가'
           router.push('/not-found')
         } else if (response?.status === 405) {
           message = '유효한 로그인이 아닙니다'
+          setIsAdmin(false)
+          setMyInfo(null)
+          localStorage.removeItem('isAdmin')
+          localStorage.removeItem('accessToken')
           router.push('/')
         }
       }
@@ -64,8 +70,7 @@ const AuthChecker = () => {
 
   
   useEffect(() => {
-    const res = setClientHeaders()
-    console.log(res)
+    setClientHeaders()
   }, []);
 
   return null;

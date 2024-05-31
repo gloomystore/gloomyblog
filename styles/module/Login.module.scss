@@ -1,0 +1,132 @@
+.login-main {
+  background: rgba(0, 0, 0, .8);
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  background: url(/images/header2_3.webp);
+  background-size: contain;
+  top:0;
+  left: 0;
+  z-index: 60;
+  .black {
+    position: fixed;
+    width: 100vw !important;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 70;
+  }
+  .center {
+    position: fixed;
+    display: block !important;
+    background: #fff;
+    width: 100%;
+    max-width: 420px;
+    padding: 35px 50px 50px 50px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 75;
+    .close_btn {
+      position: absolute;
+      top: -45px;
+      width: calc(100% - 50px);
+      @media (max-width: 500px) {
+        width: calc(100% - 25px);
+      }
+      button {
+        color: #fff;
+        position: absolute;
+        right: 0;
+        font-size: 35px;
+      }
+    }
+    .title {
+      font-size: 5.5rem;
+      font-weight: 100;
+      margin-bottom: 15px;
+    }
+    form {
+      p {
+        margin-bottom: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        label {
+          display: inline-block;
+          font-size: 26px;
+          font-weight: 700;
+        }
+        input {
+          @media (max-width: 600px) {
+            height: 35px;
+            position: relative;
+          }
+          &:not([type="file"]) {
+            height: 36px;
+            position: relative;
+            border: 1px solid #252525;
+            border-radius: 3px;
+          }
+          &[type="file"] {
+            position: absolute;
+            width: 0;
+            height: 0;
+            opacity: 0;
+            &+.file_directory {
+              border: 1px solid #252525;
+              border-radius: 3px;
+              width: 171px;
+              height: 36px;
+              line-height: 36px;
+              font-size: 15px;
+              font-weight: 700;
+              padding-bottom: 40px;
+              text-align: center;
+              overflow: hidden;
+              margin-top: 2px;
+              cursor: pointer;
+            }
+          }
+        }
+        &.info {
+          position: relative;
+          button {
+            position: absolute;
+            right: -30px;
+            top: 8px;
+            display: block;
+            width: 27px;
+            height: 27px;
+            img {
+              display: inline-block;
+              width: 27px;
+              height: 27px;
+            }
+          }
+        }
+      }
+      .login_btns {
+        button {
+          margin-top: 30px;
+          padding: 2px;
+          font-size: 18px;
+          background: black;
+          border-radius: 3px;
+          color: #fff;
+          &:not(:first-of-type) {
+            margin-left: 10px;
+          }
+        }
+      } 
+    }
+    &.join {
+      max-width: 490px;
+      p {
+        label {
+
+        }
+      }
+    }
+  }
+}

@@ -2,6 +2,9 @@
 import { useState, useCallback } from 'react'
 import styles from '@/styles/module/Header.module.scss'
 import Link from 'next/link'
+import { useRecoilState } from 'recoil'
+import { ProfileModalActiveAtom, ProfileModalAtom } from '@/store/ModalAtom'
+import axios from 'axios'
 
 export default function Header() {
   // modal
@@ -9,10 +12,26 @@ export default function Header() {
   const closeModal = useCallback(() => {
     setActiveModal(false)
   }, [activeModal])
-  const [profileId, setProfileId] = useState(0)
-  const profileView = useCallback((id:string) => {
 
-  }, [profileId])
+  const [profileModal, setProfileModal] = useRecoilState(ProfileModalAtom)
+  const [profileModalActive, setProfileModalActive] = useRecoilState(ProfileModalActiveAtom)
+  const profileView = useCallback(async(id:string) => {
+    try {
+      const data = {id}
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/common/getProfile`, data)
+      if(res.status === 200) {
+        setProfileModal(res.data)
+        setProfileModalActive(true)
+      }
+    } catch(err) {
+      console.log(err)
+    }
+  }, [profileModal, profileModalActive])
+
+
+
+  
+  
   return (
     <header className={styles['gl-header']}>
       <div className={styles['gl-imgbox']}>
@@ -35,7 +54,7 @@ export default function Header() {
             </li>
             <li className='active'>
               <Link
-                href='/board/52/1'
+                href='/board/52/page/1#title'
                 title='dev'
               >
                 <span className='t-purple'>d</span>ev
@@ -43,7 +62,7 @@ export default function Header() {
             </li>
             <li>
               <Link
-                href='/board/214/1'
+                href='/board/214/page/1#title'
                 title='dayz'
               >
                 d<span className='t-green'>a</span>yz
@@ -51,7 +70,7 @@ export default function Header() {
             </li>
             <li>
               <Link
-                href='/board/52/1'
+                href='/board/52/page/1#title'
                 title='comment'
               >
                 방명<span className='t-sky'>록</span>

@@ -80,6 +80,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
       },
       module_srl: moduleSrl
     }
+    
     return {
       props: {
         documents: JSON.parse(JSON.stringify(documents))
@@ -102,7 +103,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
   }
 };
 
-export default function Home({
+export default function Board({
   documents = '[]'
 }:{documents: any}) {
   // 로딩
@@ -122,37 +123,11 @@ export default function Home({
 
   }, [profileId])
 
-
-
-  const pages = [1, 2]; // 페이지 번호 예시
-
-const getBoardPage = (page: number, moduleSrl: string) => {
-  console.log(`Load page ${page} for module ${moduleSrl}`);
-};
-
-const getBoardPageBtn = (direction: string, moduleSrl: string) => {
-  console.log(`Load page in direction ${direction} for module ${moduleSrl}`);
-};
-
-  let SSRPaging:number[] = []
+  const SSRPaging:number[] = []
   if (documents.page?.totalPages > 0) {
-    const totalPages = documents.page.totalPages;
-    let startPage = Math.max(1, documents.page.currentPage - 3);
-    let endPage = Math.min(totalPages, documents.page.currentPage + 3);
-
-    if (documents.page.currentPage <= 4) {
-      startPage = 1;
-      endPage = Math.min(10, totalPages);
-    } else if (documents.page.currentPage > totalPages - 6) {
-      startPage = Math.max(totalPages - 9, 1);
-      endPage = totalPages;
+    for(let i = 1; i < documents.page.totalPages + 1; i++) {
+      SSRPaging.push(i)
     }
-
-    const newPaging = [];
-    for (let i = startPage; i <= endPage; i++) {
-      newPaging.push(i);
-    }
-    SSRPaging = newPaging;
   }
 
   return (
@@ -178,14 +153,14 @@ const getBoardPageBtn = (direction: string, moduleSrl: string) => {
                 <h2 className='title02 deco' itemProp='title' id='title'>
                   {
                     documents.module_srl === 52 && (
-                      <Link href='/board/52/1#title' title='개발일기'>
+                      <Link href='/board/52/page/1#title' title='개발일기'>
                         <span className='t-beige'>Dev</span>elopment!
                       </Link>
                     )
                   }
                   {
                     documents.module_srl === 214 && (
-                      <Link href='/board/214/1#title' title='일상 일기'>
+                      <Link href='/board/214/page/1#title' title='일상 일기'>
                         <span className='t-beige'>Dai</span>ly
                       </Link>
                     )
@@ -202,8 +177,8 @@ const getBoardPageBtn = (direction: string, moduleSrl: string) => {
               <div className='gallery' id='gallery'>
                 {documents.data?.map((item:any, idx:number) => (
                   <div key={idx + 'card' + item.id} className='card_wrapper js-fadeIn' itemProp='workExample'>
-                    <a
-                      href={'#!'}
+                    <Link
+                      href={`/board/${item.module_srl}/document/${item.document_srl}`}
                       title={item.title}
                       className='card'
                     >
@@ -228,8 +203,8 @@ const getBoardPageBtn = (direction: string, moduleSrl: string) => {
                           <span>{item.regdate}</span>
                         </p>
                       </div>
-                    </a>
-                    <Link href={`/board/${item.module_srl}/1`} title='게시판으로' className='module_float'>
+                    </Link>
+                    <Link href={`/board/${item.module_srl}/page/1#title`} title='게시판으로' className='module_float'>
                       {item.module_srl === 52 ? 'development' : 'daily'}
                     </Link>
                   </div>
@@ -240,7 +215,7 @@ const getBoardPageBtn = (direction: string, moduleSrl: string) => {
                   type='button'
                   className='arrow_btn double first'
                   aria-label='arrow_btn_double_first'
-                  href={`/board/${documents.module_srl}/1#title`}
+                  href={`/board/${documents.module_srl}/page/1#title`}
                 >
                   <i className='fa fa-angle-double-left'></i>
                 </Link>
@@ -248,7 +223,7 @@ const getBoardPageBtn = (direction: string, moduleSrl: string) => {
                   type='button'
                   className='arrow_btn single prev'
                   aria-label='arrow_btn_single_prev'
-                  href={documents.page?.currentPage !== 1 ? `/board/${documents.module_srl}/${documents.page?.currentPage - 1}#title` : '#!'}
+                  href={documents.page?.currentPage !== 1 ? `/board/${documents.module_srl}/page/${documents.page?.currentPage - 1}#title` : '#!'}
                   id='pageBoardLeft'
                 >
                   <i className='fa fa-angle-left'></i>
@@ -260,7 +235,7 @@ const getBoardPageBtn = (direction: string, moduleSrl: string) => {
                       type='button'
                       className={`paging_btn ${page === documents.page.currentPage && 'active'}`}
                       aria-label={`paging_btn_${page}`}
-                      href={`/board/${documents.module_srl}/${page}#title`}
+                      href={`/board/${documents.module_srl}/page/${page}#title`}
                     >
                       <i className='fa'>{page}</i>
                     </Link>
@@ -270,7 +245,7 @@ const getBoardPageBtn = (direction: string, moduleSrl: string) => {
                   type='button'
                   className='arrow_btn single next'
                   aria-label='arrow_btn_single_next'
-                  href={documents.page?.currentPage + 1 < documents.page?.totalPages ? `/board/${documents.module_srl}/${documents.page.currentPage + 1}#title` : '#!'}
+                  href={documents.page?.currentPage + 1 < documents.page?.totalPages ? `/board/${documents.module_srl}/page/${documents.page.currentPage + 1}#title` : '#!'}
                   id='pageBoardRight'
                 >
                   <i className='fa fa-angle-right'></i>
@@ -279,7 +254,7 @@ const getBoardPageBtn = (direction: string, moduleSrl: string) => {
                   type='button'
                   className='arrow_btn double last'
                   aria-label='arrow_btn_double_last'
-                  href={`/board/${documents.module_srl}/${documents.page?.totalPages}#title`}
+                  href={`/board/${documents.module_srl}/page/${documents.page?.totalPages}#title`}
                   id='pageBoardRightDouble'
                 >
                   <i className='fa fa-angle-double-right'></i>

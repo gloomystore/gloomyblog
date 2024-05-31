@@ -50,9 +50,12 @@
       }
     }
   }
-  #content {
+  .content {
     width: 100%;
     height: 100%;
+    @media(max-width:600px) {
+      padding: 0 10px;
+    }
   }
   .comment {
     @media (max-width: 460px) {

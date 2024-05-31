@@ -1,3 +1,4 @@
+import NodeRSA from 'node-rsa'
 function getDates() {
   // 1. 현재 시간(Locale)
   const curr = new Date();
@@ -67,4 +68,15 @@ function strip_tags(input: string, allowed?: string) {
   }
 }
 
-export { getDates, strip_tags };
+type Param = {
+  id: string,
+  pw: string
+}
+function encryptParam(param:Param, key:string){
+  const str = `${param.id}|${param.pw}`
+  const pubKey = new NodeRSA(key);
+  const encryptedInfo = pubKey.encrypt(str, 'base64');
+  return encryptedInfo
+}
+
+export { getDates, strip_tags, encryptParam };

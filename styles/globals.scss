@@ -10,6 +10,8 @@
 @import '@/styles/table.scss';
 @import '@/styles/list.scss';
 @import '@/styles/modal.scss';
+@import '@/styles/board.scss';
+@import '@/styles/rhymix.scss';
 
 html {
   font-size: 16px;
@@ -25,6 +27,8 @@ html {
   }
   overflow-y: overlay;
 }
+a {-webkit-tap-highlight-color: transparent}
+button {font-family: 'NotoSansKR';}
 body {
   // background: url('/images/bg/galaxy.webp');
   background: url('/images/bg/bg.jpg');

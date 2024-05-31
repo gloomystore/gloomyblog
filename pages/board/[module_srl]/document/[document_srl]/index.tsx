@@ -82,10 +82,106 @@ export const getStaticProps: GetStaticProps<Props> = async (ctx: GetStaticPropsC
       FROM xe_documents
       WHERE document_srl = ${document_srl}
     `)
+    const row = documentRows.map(e => ({
+      ...e,
+      summary: e.content.slice(0, 40)
+    }))
+    // 이전 글 가져오기
+    const this_regdate = (row[0] as any).regdate;
+    console.log('this_regdate')
+    console.log(this_regdate)
+    console.log('this_regdate')
+    const [beforeRows] = await pool.query(
+      `SELECT * FROM (SELECT * FROM xe_documents WHERE status = 'PUBLIC' AND module_srl = ? AND regdate > ? ORDER BY regdate LIMIT 2) tmp ORDER BY regdate DESC`,
+      [module_srl, this_regdate]
+    );
+
+    const beforePosts = (beforeRows as any[]).map((row: any) => {
+      const {
+        document_srl,
+        module_srl,
+        title,
+        content,
+        thumb,
+        readed_count,
+        nick_name,
+        regdate,
+        status,
+      } = row;
+
+      let before_thumb = thumb !== 'null' ? `/images/board/${document_srl}/thumb.${thumb}` : '/images/flower6.jpg';
+      let before_re_title = title;
+      let before_converted = strip_tags(content);
+
+      if (title.length > 15) {
+        before_re_title = title.substring(0, 15) + '...';
+      }
+      if (before_converted.length > 35) {
+        before_converted = before_converted.substring(0, 35) + '...';
+      }
+
+      return {
+        document_srl,
+        module_srl,
+        title: before_re_title,
+        content: before_converted,
+        thumb: before_thumb,
+        readed_count,
+        nick_name,
+        regdate,
+        status,
+      };
+    });
+
+    // 이후 글 가져오기
+    const [afterRows] = await pool.query(
+      `SELECT * FROM xe_documents WHERE status = 'PUBLIC' AND module_srl = ? AND regdate < ? ORDER BY regdate DESC LIMIT 2`,
+      [module_srl, this_regdate]
+    );
+
+    const afterPosts = (afterRows as any[]).map((row: any) => {
+      const {
+        document_srl,
+        module_srl,
+        title,
+        content,
+        thumb,
+        readed_count,
+        nick_name,
+        regdate,
+        status,
+      } = row;
+
+      let after_thumb = thumb !== 'null' ? `/images/board/${document_srl}/thumb.${thumb}` : '/images/flower6.jpg';
+      let after_re_title = title;
+      let after_converted = strip_tags(content);
+
+      if (title.length > 15) {
+        after_re_title = title.substring(0, 15) + '...';
+      }
+      if (after_converted.length > 35) {
+        after_converted = after_converted.substring(0, 35) + '...';
+      }
+
+      return {
+        document_srl,
+        module_srl,
+        title: after_re_title,
+        content: after_converted,
+        thumb: after_thumb,
+        readed_count,
+        nick_name,
+        regdate,
+        status,
+      };
+    });
+
+    ;
 
     return {
       props: {
-        documents: JSON.parse(JSON.stringify(documentRows))
+        documents: JSON.parse(JSON.stringify(row[0])),
+        otherPost: JSON.parse(JSON.stringify([...beforePosts, ...afterPosts])),
       },
       revalidate: 43200, // 12시간 (43200초)마다 재생성
     } as GetStaticPropsResult<any>
@@ -93,17 +189,20 @@ export const getStaticProps: GetStaticProps<Props> = async (ctx: GetStaticPropsC
     console.log(err)
     return {
       props: {
-        documents: '[]'
+        documents: {},
+        otherPost: []
       }
     }
   }
 }
 
-export default function Home({
-  documents = '[]'
-}:{documents: any}) {
+export default function Document({
+  documents = {},
+  otherPost = [],
+}:{documents: any, otherPost: any[]}) {
   
-  console.log(documents)
+  // console.log(documents)
+  // console.log(otherPost)
 
   
   const onMoveBoard = () => {}
@@ -114,9 +213,9 @@ export default function Home({
   return (
     <>
       <HeadComponent
-      title={'글루미스토어 - 프론트엔드 개발자 영 블로그'}
-      description={'프론트엔드 개발자 영의 블로그입니다. 이 웹사이트의 모든 동작은 state binding으로 구현되어있습니다. 또한 이 웹사이트는 Next.js로 구현되어있습니다.'}
-      keywords={'글루미스토어, 퍼블리셔, 프론트엔드, 개발자, FE, 웹퍼블리셔, HTML5, CSS3, ES6, Jquery, PHP, Photoshop'}
+      title={documents.title}
+      description={documents.summary}
+      keywords={documents.tags}
       />
       
       <div className='gl-wrap'>
@@ -124,7 +223,7 @@ export default function Home({
           <Header />
           <main className='gallery_wrap gallery_wrap--board' itemScope={true} itemType='https://schema.org/CreativeWork'>
             <div className='mt-50'>
-              <h1 className='invisible'>글루미스토어 - 프론트엔드 개발자 블로그 </h1>
+              <h1 className='invisible'>{documents.title}</h1>
               <h2 className='title02 deco' itemProp='title' id='title'>
                 <Link href='/#title'>
                   my <span className='t-beige'>Blog</span>!
@@ -136,61 +235,21 @@ export default function Home({
             <div className={styles['content_wrap']} id='content_wrap' itemScope={true} itemType='https://schema.org/CreativeWork'>
               <div className={styles['title_wrap']}>
                 <div className={styles['title']}>
-                  <h2 itemProp='title'>아이폰 safe-area 대응하기 (아이폰 X 이상, 이하 구분하기)</h2>
+                  <h2 itemProp='title'>{documents.title}</h2>
                   <p>
                     <span id='date' itemProp='datePublished'>2023.09.11</span>
                     <span>
-                      <em id='count'>조회수: 1188</em>
-                      <em id='name' itemProp='creator'><b>[운영자]</b>영이</em>
+                      <em id='count'>조회수{documents.readed_count}</em>
+                      <em id='name' itemProp='creator'>{documents.user_name}</em>
                     </span>
                   </p>
                 </div>
               </div>
               <div className={styles['content']} id='content'>
                 <div className={styles['young_board_content']} data-pswp-uid='1'>
-
-
-
-
-
-
-
-
-                <p><br /></p><p><br /></p><p><br /></p><p><br /></p><p className="summer_img_wrapper"><img alt="maxresdefault.jpg" className="uploaded_img sm-width50" src="/images/board/1027/20230911122425_3fb2db6cccf4a23383383394b28b2b31.jpg"/><br /></p><p><br /></p><p><br /></p><p><br /></p><p><br /></p><pre><code className="language-css hljs">
-<span className="hljs-keyword">@supports</span> (<span className="hljs-attribute">-webkit-touch-callout</span>: none) {`{`}
-  <span className="hljs-comment">/*아이폰 전체*/</span>
-  <span className="hljs-attribute">padding-bottom</span>: <span className="hljs-number">30px</span>;
-  <span className="hljs-selector-class">.padding-bottom</span> {`{`}
-    <span className="hljs-comment">/* iPhone X 이하일 때 */</span>
-    <span className="hljs-keyword">@media</span> <span className="hljs-keyword">only</span> screen <span className="hljs-keyword">and</span> (<span className="hljs-attribute">max-device-width</span>: <span className="hljs-number">812px</span>) <span className="hljs-keyword">and</span> (<span className="hljs-attribute">-webkit-min-device-pixel-ratio</span>: <span className="hljs-number">2</span>) <span className="hljs-keyword">and</span> (<span className="hljs-attribute">orientation</span>: portrait),
-    <span className="hljs-keyword">only</span> screen <span className="hljs-keyword">and</span> (<span className="hljs-attribute">max-device-width</span>: <span className="hljs-number">812px</span>) <span className="hljs-keyword">and</span> (<span className="hljs-attribute">-webkit-min-device-pixel-ratio</span>: <span className="hljs-number">2</span>) <span className="hljs-keyword">and</span> (<span className="hljs-attribute">orientation</span>: landscape) {`{`}
-      <span className="hljs-attribute">padding-bottom</span>: <span className="hljs-built_in">calc</span>(<span className="hljs-number">48px</span> + #{`{`}$-h-btn-fixed{`}`} + #{`{`}$-spacing_y{`}`}) !important;
-      <span className="hljs-attribute">padding-bottom</span>: <span className="hljs-built_in">calc</span>( <span className="hljs-number">48px</span> + #{`{`}$-h-btn-fixed{`}`} + #{`{`}$-spacing_y{`}`}) !important;
-      <span className="hljs-comment">/* iPhone X 이상일 때 */</span>
-      <span className="hljs-keyword">@media</span> <span className="hljs-keyword">only</span> screen <span className="hljs-keyword">and</span> (<span className="hljs-attribute">max-device-width</span>: <span className="hljs-number">812px</span>) <span className="hljs-keyword">and</span> (<span className="hljs-attribute">-webkit-min-device-pixel-ratio</span>: <span className="hljs-number">3</span>) <span className="hljs-keyword">and</span> (<span className="hljs-attribute">orientation</span>: portrait),
-      <span className="hljs-keyword">only</span> screen <span className="hljs-keyword">and</span> (<span className="hljs-attribute">max-device-width</span>: <span className="hljs-number">812px</span>) <span className="hljs-keyword">and</span> (<span className="hljs-attribute">-webkit-min-device-pixel-ratio</span>: <span className="hljs-number">3</span>) <span className="hljs-keyword">and</span> (<span className="hljs-attribute">orientation</span>: landscape) {`{`}
-        <span className="hljs-attribute">padding-bottom</span>: <span className="hljs-built_in">calc</span>(<span className="hljs-built_in">constant</span>(safe-area-inset-bottom) + <span className="hljs-number">48px</span> + #{`{`}$-h-btn-fixed{`}`}) !important;
-        <span className="hljs-attribute">padding-bottom</span>: <span className="hljs-built_in">calc</span>(<span className="hljs-built_in">env</span>(safe-area-inset-bottom) + <span className="hljs-number">48px</span> + #{`{`}$-h-btn-fixed{`}`}) !important;
-        {`}`}
-      {`}`}
-    {`}`}
-  {`}`}</code></pre><p><br /></p><p><br /></p><p>아이폰만, 게다가 아이폰 버전별로 css를 먹이는 key는 바로&nbsp;</p><p>-webket-touch-callout: none과&nbsp;</p><p>-webkit-min-device-pixel-ratio 두가지였다.</p><p><br /></p><p>일단 테스트해보면 웬만한 아이폰에서는 정상적으로 잘먹힘.</p><p><br /></p><p>앱이 아니라 웹에서는 safe area대응이 정말 불편하고&nbsp;</p><p>일일이 수동으로 다 짜줘야해서 너무 어려웠던 기억이 난다.</p><p><br /></p><p>아이폰은 X부터 홈버튼이 사라지고 home bar가 생겼는데, 마침 이 시기에 픽셀비율이 3이상이 되어서&nbsp;</p><p>홈바가 있냐 없냐 구분은 픽셀비율이 2냐 3이냐로 따지면 됨.</p><p><br /></p><p><br /></p><p><br /></p><p><br /></p>              
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                  {
+                    documents.content && <div id='real' dangerouslySetInnerHTML={{__html: documents.content}} />
+                  }
                 </div>
               </div>
               <div className={styles['comment']} id='comment'>
@@ -230,24 +289,24 @@ export default function Home({
             <div className={styles['another_content']}>
               <h3>이전/다음글</h3>
               <div className={styles['another_content_inner']}>
-                <a href='#' title='아이폰 safe-area 대응하기 (아이폰 X 이상, 이하 구분하기)' style={{backgroundImage: `url('/images/file/board/1027/thumb.jpg')`}} className='active'>
+                <Link href=':' title='아이폰 safe-area 대응하기 (아이폰 X 이상, 이하 구분하기)' style={{backgroundImage: `url('/images/file/board/1027/thumb.jpg')`}} className='active'>
                   <div className={styles['script']}>
                     <p className={styles['subject']}><span>아이폰 sdumidumiudmidumidutmafe-area 대...</span></p>
-                    <p className={styles['text']}><span>@supports (-webkit-touch-calghjhjghjtyjyrtjenuryjurmyulout: n...</span></p>
+                    <p className={styles['text']}><span>@supports -webkit-touch-calghjhjghjtyjyrtjenuryjurmyulout: n...</span></p>
                   </div>
-                </a>
-                <a href='/board/board.php?document_srl=1015&amp;module_srl=52&amp;view_all=0#title' title='input file 파일 복수 업로드 구현' style={{backgroundImage: `url('/images/file/board/1015/thumb.png')`}}>
+                </Link>
+                <Link href=':' title='input file 파일 복수 업로드 구현' style={{backgroundImage: `url('/images/file/board/1015/thumb.png')`}}>
                   <div className={styles['script']}>
                     <p className={styles['subject']}><span>input fidumiumidutmidmidumtidumile 파일 복...</span></p>
                     <p className={styles['text']}><span>&lt;!DOCTYPE html&gt;&lt;htmyumytmdudytmitumitumiudmidumil lang=...</span></p>
                   </div>
-                </a>
-                <a href='/board/board.php?document_srl=1002&amp;module_srl=52&amp;view_all=0#title' title='axios 취소 기능으로 검색 debounce 구현하기' style={{backgroundImage: `url('/images/file/board/1002/thumb.jpg')`}}>
+                </Link>
+                <Link href=':' title='axios 취소 기능으로 검색 debounce 구현하기' style={{backgroundImage: `url('/images/file/board/1002/thumb.jpg')`}}>
                   <div className={styles['script']}>
                     <p className={styles['subject']}><span>axios 취소 기능으로 검...</span></p>
                     <p className={styles['text']}><span>&lt;input type='text' oninput='hand...</span></p>
                   </div>
-                </a>
+                </Link>
               </div>
             </div>
           </main>

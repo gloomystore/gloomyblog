@@ -75,14 +75,17 @@
         }
         .submenu {
           position: absolute;
-          bottom: 0;
+          top: 30px;
           transition: 0.3s;
           opacity: 0;
           visibility: hidden;
           right: 0;
           background: rgba(0, 0, 0, 0.7);
-          a {
+          a, button {
+            color: #fff;
+            text-align: left;
             font-size: 13px;
+            font-weight: 700;
             width: 120px;
             padding: 7px 10px;
             display: inline-block;
@@ -90,7 +93,7 @@
         }
         &.opened {
           .submenu {
-            bottom: -70px;
+            top: 45px;
             opacity: 1;
             visibility: visible;
           }
@@ -171,7 +174,7 @@
           &:not(:first-of-type) {
             margin-top: 3rem;
           }
-          a {
+          a, button {
             color: #fff;
             font-size: 1.3rem;
             font-weight: 700;
@@ -198,7 +201,7 @@
             }
             .submenu {
               position: absolute;
-              bottom: 0;
+              top: 30px;
               transition: 0.3s;
               opacity: 0;
               visibility: hidden;
@@ -213,7 +216,7 @@
             }
             &.opened {
               .submenu {
-                bottom: -70px;
+                top: 45px;
                 opacity: 1;
                 visibility: visible;
               }
