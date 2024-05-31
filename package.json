@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "local": "set NODE_ENV=test && next dev -p 5555",
+    "local": "set NODE_ENV=development && next dev -p 5555",
     "dev": "set NODE_ENV=development && next dev -p 5555",
     "test": "set NODE_ENV=test && next test -p 5555",
     "build": "next build",

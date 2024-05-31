@@ -29,6 +29,8 @@ body {
   // background: url('/images/bg/galaxy.webp');
   background: url('/images/bg/bg.jpg');
   // background-attachment: fixed;
+  position: relative;
+  z-index: -2;
 }
 
 main {
@@ -207,8 +209,10 @@ b, strong {
   border-top: 1px solid transparent;
   display: flex;
   justify-content: center;
+  align-items: center;
   padding: 35px 0 35px;
   .paging_btn, .arrow_btn {
+    display: inline-block;
     border: 1px solid #5f6d7e;
     background: #5f6d7e;
     color: #c9c9c9;

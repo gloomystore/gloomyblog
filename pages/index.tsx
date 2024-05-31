@@ -6,7 +6,7 @@ import { useRecoilState } from 'recoil';
 import { LoadAtom, ScrollBlockAtom } from '@/store/CommonAtom'
 import HeadComponent from '@/pages/components/HeadComponent';
 import Loading from '@/pages/components/Loading';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios'
 
 import Header from '@/pages/components/Header'
@@ -74,20 +74,20 @@ export const getServerSideProps = async() => {
     }
     return {
       props: {
-        documents: JSON.stringify(documents)
+        documents: JSON.parse(JSON.stringify(documents))
       }
     }
   } catch(er) {
     console.log(er)
     return {
       props: {
-        documents: JSON.stringify({
+        documents: {
           data: [],
           page: {
             currentPage: 0,
             totalPages: 0
           }
-        })
+        }
       }
     }
   }
@@ -125,17 +125,51 @@ export default function Home({
       totalPages: 0
     }
   }), [])
-  const [document, setDocument] = useState(initialState)
+  const [Document, setDocument] = useState(initialState)
   useEffect(() => {
-    const res = JSON.parse(documents)
+    const res = documents
     setDocument(res)
   },[documents])
 
+
+  const [currentPage, setCurrentPage] = useState(1)
+  const [paging, setPaging] = useState([1])
+  const [hydrated, setHydrated] = useState(false)
+  useEffect(() => {
+    if (Document.page.totalPages > 0) {
+      const totalPages = Document.page.totalPages;
+      let startPage = Math.max(1, currentPage - 3);
+      let endPage = Math.min(totalPages, currentPage + 3);
+  
+      if (currentPage <= 4) {
+        startPage = 1;
+        endPage = Math.min(10, totalPages);
+      } else if (currentPage > totalPages - 6) {
+        startPage = Math.max(totalPages - 9, 1);
+        endPage = totalPages;
+      }
+  
+      const newPaging = [];
+      for (let i = startPage; i <= endPage; i++) {
+        newPaging.push(i);
+      }
+      setPaging(newPaging);
+    }
+  }, [Document, currentPage])
+  const changePage = useCallback((page:number) => {
+    if(!hydrated) setHydrated(true)
+    setCurrentPage(page)
+  }, [currentPage])
+  useEffect(() => {
+    if(!titleRef.current) return
+    getBoardData(currentPage)
+    titleRef.current.scrollIntoView()
+  }, [currentPage])
   const getBoardData = useCallback(async(page:number) => {
     try {
       const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/board/all/${page}`)
       if(res.status === 200) {
-        setDocument(res.data)
+        setDocument(JSON.parse(res.data))
       } else throw new Error('network failed')
     } catch(err) {
       console.log(err)
@@ -143,7 +177,7 @@ export default function Home({
     }
   }, [])
 
-
+  const titleRef = useRef<HTMLHeadingElement>(null)
 
   const pages = [1, 2]; // 페이지 번호 예시
 
@@ -175,24 +209,26 @@ export default function Home({
           <main className='gl-card-list'>
             <div className='gallery_wrap' itemScope itemType='https://schema.org/CreativeWork'>
               <div>
-                <h1 className='invisible'>글루미스토어 - 프론트엔드 개발자의 포트폴리오 </h1>
-                <h2 className='title02 deco' itemProp='title'>
-                  <a href='/board/index.php?module_srl=module_srl#title'>
+                <h1 className='invisible'>글루미스토어 - 프론트엔드 개발자 블로그 </h1>
+                <h2 className='title02 deco' itemProp='title' id='title' ref={titleRef}>
+                  <Link href='/#title'>
                     my <span className='t-beige'>Blog</span>!
-                  </a>
+                  </Link>
                 </h2>
               </div>
               <div className='gallery' id='gallery'>
-                {document && document?.data?.length && document?.data?.map((item:any, idx) => (
+                {
+                !hydrated &&
+                documents?.data?.map((item:any, idx:number) => (
                   <div key={idx + 'card' + item.id} className='card_wrapper js-fadeIn' itemProp='workExample'>
-                    <a
-                      href={'#!'}
+                    <Link
+                      href={`/board/all/document/${item.document_srl}`}
                       title={item.title}
                       className='card'
                     >
                       <p className='thumbnail'>
                         <img
-                          src={`/images/file/board/${item.document_srl}/thumb.${item.thumb}`}
+                          src={item.thumb && item.thumb !== 'null' ? `/images/file/board/${item.document_srl}/thumb.${item.thumb} ` : '/images/header2_3.webp'}
                           alt='thumbnail'
                           onError={(e) => (e.currentTarget.src = '/images/header2_3.webp')}
                         />
@@ -211,19 +247,57 @@ export default function Home({
                           <span>{item.regdate}</span>
                         </p>
                       </div>
-                    </a>
+                    </Link>
                     <Link href={`/board/${item.module_srl}/1`} title='게시판으로' className='module_float'>
                       {item.module_srl === 52 ? 'development' : 'daily'}
                     </Link>
                   </div>
-                ))}
+                ))
+                }
+                {
+                  hydrated &&
+                Document && Document?.data?.length && Document?.data?.map((item:any, idx:number) => (
+                  <div key={idx + 'card' + item.id} className='card_wrapper js-fadeIn' itemProp='workExample'>
+                    <Link
+                      href={`/board/all/document/${item.document_srl}`}
+                      title={item.title}
+                      className='card'
+                    >
+                      <p className='thumbnail'>
+                        <img
+                          src={item.thumb && item.thumb !== 'null' ? `/images/file/board/${item.document_srl}/thumb.${item.thumb} ` : '/images/header2_3.webp'}
+                          alt='thumbnail'
+                          onError={(e) => (e.currentTarget.src = '/images/header2_3.webp')}
+                        />
+                      </p>
+                      <div className='script'>
+                        {/* <p className='module'>
+                          <span>{item.module}</span>
+                        </p> */}
+                        <p className='title' itemProp='about'>
+                          {item.title}
+                        </p>
+                        <p className='text'>
+                          {strip_tags(item.content)}
+                        </p>
+                        <p className='date' itemProp='datePublished'>
+                          <span>{item.regdate}</span>
+                        </p>
+                      </div>
+                    </Link>
+                    <Link href={`/board/${item.module_srl}/1`} title='게시판으로' className='module_float'>
+                      {item.module_srl === 52 ? 'development' : 'daily'}
+                    </Link>
+                  </div>
+                ))
+                }
               </div>
               <div className='paging'>
                 <button
                   type='button'
                   className='arrow_btn double first'
                   aria-label='arrow_btn_double_first'
-                  onClick={() => getBoardData(1)}
+                  onClick={() => changePage(1)}
                 >
                   <i className='fa fa-angle-double-left'></i>
                 </button>
@@ -231,19 +305,23 @@ export default function Home({
                   type='button'
                   className='arrow_btn single prev'
                   aria-label='arrow_btn_single_prev'
-                  onClick={() => getBoardPageBtn('left', 'module_srl')}
+                  onClick={() => {
+                    if(currentPage > 1) {
+                      changePage(currentPage + 1)
+                    }
+                  }}
                   id='pageBoardLeft'
                 >
                   <i className='fa fa-angle-left'></i>
                 </button>
                 <div id='board_paging'>
-                  {pages.map((page) => (
+                  {paging?.length && paging?.map((page) => (
                     <button
-                      key={page}
+                      key={'paging' + page}
                       type='button'
-                      className={`paging_btn ${page === 1 ? 'active' : ''}`}
+                      className={`paging_btn ${page === currentPage && 'active'}`}
                       aria-label={`paging_btn_${page}`}
-                      onClick={() => getBoardData(page)}
+                      onClick={() => changePage(page)}
                     >
                       <i className='fa'>{page}</i>
                     </button>
@@ -253,7 +331,11 @@ export default function Home({
                   type='button'
                   className='arrow_btn single next'
                   aria-label='arrow_btn_single_next'
-                  onClick={() => getBoardPageBtn('right', 'module_srl')}
+                  onClick={() => {
+                    if(currentPage < documents.page.totalPages) {
+                      changePage(currentPage + 1)
+                    }
+                  }}
                   id='pageBoardRight'
                 >
                   <i className='fa fa-angle-right'></i>
@@ -262,7 +344,7 @@ export default function Home({
                   type='button'
                   className='arrow_btn double last'
                   aria-label='arrow_btn_double_last'
-                  onClick={() => getBoardPageBtn('rightDouble', 'module_srl')}
+                  onClick={() => changePage(documents.page.totalPages)}
                   id='pageBoardRightDouble'
                 >
                   <i className='fa fa-angle-double-right'></i>

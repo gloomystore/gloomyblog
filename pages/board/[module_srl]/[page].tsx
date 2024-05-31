@@ -16,6 +16,7 @@ import pool from '@/pages/api/db/mysql';
 import { RowDataPacket } from 'mysql2';
 import { strip_tags } from '@/utils/common';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 
 type Props = {
   props : {
@@ -28,13 +29,6 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
     const pageSize = 9;
     const offset = (parseInt(page as string) - 1) * pageSize;
     const moduleSrl = parseInt(module_srl as string);
-
-    console.log('page----------------')
-    console.log(page)
-    console.log('offset----------------')
-    console.log(offset)
-    console.log('moduleSrl----------------')
-    console.log(moduleSrl)
 
     const [documentRows] = await pool.query<RowDataPacket[]>(`
       SELECT blamed_count,
@@ -61,18 +55,48 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
       WHERE module_srl = ?
       ORDER BY regdate DESC
       LIMIT ? OFFSET ?
-    `, [moduleSrl, pageSize, offset]);
+    `, [moduleSrl, pageSize, offset])
 
+    const limit200 = (str:string) => {
+      return str.slice(0, 200)
+    }
+    const rows = documentRows.map((e:any) => ({...e, content: limit200(strip_tags(e.content))}))
+
+    const [totalRows] = await pool.query<RowDataPacket[]>(`
+      SELECT COUNT(*) as total
+      FROM xe_documents
+      WHERE module_srl IN (${moduleSrl})
+    `);
+    const totalCount = totalRows[0].total;
+
+    // 총 페이지 수를 계산합니다
+    const totalPages = Math.ceil(totalCount / pageSize)
+
+    const documents = {
+      data: rows,
+      page: {
+        currentPage: Number(page),
+        totalPages
+      },
+      module_srl: moduleSrl
+    }
     return {
       props: {
-        documents: JSON.stringify(documentRows)
+        documents: JSON.parse(JSON.stringify(documents))
       }
     } as GetServerSidePropsResult<any>
-  } catch(er) {
-    console.log(er)
+  } catch(err) {
+    console.log(err)
     return {
       props: {
-        documents: '[]'
+        documents: {
+          data: [],
+          page: {
+            currentPage: 0,
+            totalPages: 0,
+          },
+          module_srl: 0,
+        }
       }
     }
   }
@@ -80,7 +104,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
 
 export default function Home({
   documents = '[]'
-}:{documents: string}) {
+}:{documents: any}) {
   // 로딩
   const [scrollBlock, setScrollBlock] = useRecoilState(ScrollBlockAtom);
   const [load, setLoad] = useRecoilState(LoadAtom)
@@ -100,13 +124,6 @@ export default function Home({
 
 
 
-  const [document, setDocument] = useState([])
-  useEffect(() => {
-    const data = JSON.parse(documents)
-    console.log(data)
-    setDocument(data)
-  },[documents])
-
   const pages = [1, 2]; // 페이지 번호 예시
 
 const getBoardPage = (page: number, moduleSrl: string) => {
@@ -117,7 +134,26 @@ const getBoardPageBtn = (direction: string, moduleSrl: string) => {
   console.log(`Load page in direction ${direction} for module ${moduleSrl}`);
 };
 
+  let SSRPaging:number[] = []
+  if (documents.page?.totalPages > 0) {
+    const totalPages = documents.page.totalPages;
+    let startPage = Math.max(1, documents.page.currentPage - 3);
+    let endPage = Math.min(totalPages, documents.page.currentPage + 3);
 
+    if (documents.page.currentPage <= 4) {
+      startPage = 1;
+      endPage = Math.min(10, totalPages);
+    } else if (documents.page.currentPage > totalPages - 6) {
+      startPage = Math.max(totalPages - 9, 1);
+      endPage = totalPages;
+    }
+
+    const newPaging = [];
+    for (let i = startPage; i <= endPage; i++) {
+      newPaging.push(i);
+    }
+    SSRPaging = newPaging;
+  }
 
   return (
     <>
@@ -139,14 +175,32 @@ const getBoardPageBtn = (direction: string, moduleSrl: string) => {
             <div className='gallery_wrap' itemScope itemType='https://schema.org/CreativeWork'>
               <div>
                 <h1 className='invisible'>글루미스토어 - 프론트엔드 개발자의 포트폴리오 </h1>
-                <h2 className='title02 deco' itemProp='title'>
-                  <a href='/board/index.php?module_srl=module_srl#title'>
-                    my <span className='t-beige'>Blog</span>!
-                  </a>
+                <h2 className='title02 deco' itemProp='title' id='title'>
+                  {
+                    documents.module_srl === 52 && (
+                      <Link href='/board/52/1#title' title='개발일기'>
+                        <span className='t-beige'>Dev</span>elopment!
+                      </Link>
+                    )
+                  }
+                  {
+                    documents.module_srl === 214 && (
+                      <Link href='/board/214/1#title' title='일상 일기'>
+                        <span className='t-beige'>Dai</span>ly
+                      </Link>
+                    )
+                  }
+                  {
+                    ![52, 214].includes(documents.module_srl) && (
+                      <Link href='/#title' title='블로그 메인'>
+                        my <span className='t-beige'>Blog</span>!
+                      </Link>
+                    )
+                  }
                 </h2>
               </div>
               <div className='gallery' id='gallery'>
-                {document.length && document?.map((item:any, idx) => (
+                {documents.data?.map((item:any, idx:number) => (
                   <div key={idx + 'card' + item.id} className='card_wrapper js-fadeIn' itemProp='workExample'>
                     <a
                       href={'#!'}
@@ -155,7 +209,7 @@ const getBoardPageBtn = (direction: string, moduleSrl: string) => {
                     >
                       <p className='thumbnail'>
                         <img
-                          src={`/images/file/board/${item.document_srl}/thumb.${item.thumb}`}
+                          src={item.thumb && item.thumb !== 'null' ? `/images/file/board/${item.document_srl}/thumb.${item.thumb} ` : '/images/header2_3.webp'}
                           alt='thumbnail'
                           onError={(e) => (e.currentTarget.src = '/images/header2_3.webp')}
                         />
@@ -182,54 +236,54 @@ const getBoardPageBtn = (direction: string, moduleSrl: string) => {
                 ))}
               </div>
               <div className='paging'>
-                <button
+                <Link
                   type='button'
                   className='arrow_btn double first'
                   aria-label='arrow_btn_double_first'
-                  onClick={() => getBoardPage(1, 'module_srl')}
+                  href={`/board/${documents.module_srl}/1#title`}
                 >
                   <i className='fa fa-angle-double-left'></i>
-                </button>
-                <button
+                </Link>
+                <Link
                   type='button'
                   className='arrow_btn single prev'
                   aria-label='arrow_btn_single_prev'
-                  onClick={() => getBoardPageBtn('left', 'module_srl')}
+                  href={documents.page?.currentPage !== 1 ? `/board/${documents.module_srl}/${documents.page?.currentPage - 1}#title` : '#!'}
                   id='pageBoardLeft'
                 >
                   <i className='fa fa-angle-left'></i>
-                </button>
+                </Link>
                 <div id='board_paging'>
-                  {pages.map((page) => (
-                    <button
-                      key={page}
+                  {SSRPaging?.length && SSRPaging?.map((page) => (
+                    <Link
+                      key={'paging' + page}
                       type='button'
-                      className={`paging_btn ${page === 1 ? 'active' : ''}`}
+                      className={`paging_btn ${page === documents.page.currentPage && 'active'}`}
                       aria-label={`paging_btn_${page}`}
-                      onClick={() => getBoardPage(page, 'module_srl')}
+                      href={`/board/${documents.module_srl}/${page}#title`}
                     >
                       <i className='fa'>{page}</i>
-                    </button>
+                    </Link>
                   ))}
                 </div>
-                <button
+                <Link
                   type='button'
                   className='arrow_btn single next'
                   aria-label='arrow_btn_single_next'
-                  onClick={() => getBoardPageBtn('right', 'module_srl')}
+                  href={documents.page?.currentPage + 1 < documents.page?.totalPages ? `/board/${documents.module_srl}/${documents.page.currentPage + 1}#title` : '#!'}
                   id='pageBoardRight'
                 >
                   <i className='fa fa-angle-right'></i>
-                </button>
-                <button
+                </Link>
+                <Link
                   type='button'
                   className='arrow_btn double last'
                   aria-label='arrow_btn_double_last'
-                  onClick={() => getBoardPageBtn('rightDouble', 'module_srl')}
+                  href={`/board/${documents.module_srl}/${documents.page?.totalPages}#title`}
                   id='pageBoardRightDouble'
                 >
                   <i className='fa fa-angle-double-right'></i>
-                </button>
+                </Link>
               </div>
             </div>
           </main>

@@ -4,7 +4,7 @@ import styles from '@/styles/module/NavBar.module.scss'
 // import {useRouter} from 'next/router'
 import { useEffect, useState, useCallback } from 'react';
 import { useRecoilState, useRecoilValue } from 'recoil';
-import { LoadAtom, MyInfoAtom, ScrollBlockAtom } from '@/store/CommonAtom'
+import { IsAdminAtom, LoadAtom, MyInfoAtom, ScrollBlockAtom } from '@/store/CommonAtom'
 import Link from 'next/link'
 
 export default function NavBar() {
@@ -45,6 +45,7 @@ export default function NavBar() {
   }
 
   const myInfo = useRecoilValue(MyInfoAtom)
+  const isAdmin = useRecoilValue(IsAdminAtom)
 
   /** redux */
   const [scrollBlock, setScrollBlock] = useRecoilState(ScrollBlockAtom);
@@ -89,22 +90,22 @@ export default function NavBar() {
       ${navDarker && styles['darker']}
       `}>
         <h2 className={`${styles['nav-logo']}`}>
-          <a href='#!' onClick={goHome} title='페이지 제일 위로' className={`${styles['navv']} img-box`}>
+          <Link href='/' title='홈페이지로 이동' className={`${styles['navv']} img-box`}>
             {/* <Image src={require('/public/images/logo2.png')} alt='logo' className='onlyPC' />
             <Image src={require('/public/images/logo3.png')} alt='logo' className='onlySP' /> */}
             <img src='/images/logo2.png' alt='logo' className='onlyPC' />
             <img src='/images/logo3.png' alt='logo' className='onlySP' />
-          </a>
+          </Link>
         </h2>
         <ul className={`${styles['nav-list']} onlyPC`}>
           <li>
-            <Link href='#!'>개발일지</Link>
+            <Link href='/board/52/1#title'>개발일지</Link>
           </li>
           <li>
-            <Link href='#!'>일상</Link>
+            <Link href='/board/214/1#title'>일상</Link>
           </li>
           <li>
-            <Link href='#!'>Portfolio</Link>
+            <Link href='https://www.gloomy-store.com' target='_blnk'>Portfolio</Link>
           </li>
           <li>
             <Link href='#!'>I like it</Link>
@@ -125,6 +126,9 @@ export default function NavBar() {
             <div className={styles['submenu']}>
               <Link href='#!'>회원정보 변경</Link>
               <Link href='#!'>쪽지함</Link>
+              {
+                isAdmin && <Link href='#!'>글쓰기</Link>
+              }
             </div>
           </li>
           }
@@ -138,13 +142,13 @@ export default function NavBar() {
           <article className={navActive ? `${styles['nav-menu']} ${styles['active']}` : `${styles['nav-menu']}`}>
             <ul className={`${styles['nav-list-mobile']}`}>
               <li>
-                <Link href='#!'>개발일지</Link>
+                <Link href='/board/52/1#title'>개발일지</Link>
               </li>
               <li>
-                <Link href='#!'>일상</Link>
+                <Link href='/board/214/1#title'>일상</Link>
               </li>
               <li>
-                <Link href='#!'>Portfolio</Link>
+                <Link href='https://www.gloomy-store.com'>Portfolio</Link>
               </li>
               <li>
                 <Link href='#!'>I like it</Link>
@@ -165,6 +169,9 @@ export default function NavBar() {
                 <div className={styles['submenu']}>
                   <Link href='#!'>회원정보 변경</Link>
                   <Link href='#!'>쪽지함</Link>
+                  {
+                    isAdmin && <Link href='#!'>글쓰기</Link>
+                  }
                 </div>
               </li>
               }

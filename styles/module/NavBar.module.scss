@@ -7,8 +7,8 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(0, 0, 0, 0.5);
-  transition: opacity 0.2s linear 0s;
+  background: rgba(0, 0, 0, 0.3);
+  transition: all 0.2s linear 0s;
   &.darker, &.active {
     background: rgba(0, 0, 0, 0.75);
   }

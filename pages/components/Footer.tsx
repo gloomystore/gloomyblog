@@ -38,6 +38,7 @@ export default function Footer({statistics}:any) {
           YESTERDAY:yesterdayDate,
           IPADDRESS: ipaddr,
         }
+        console.log(data)
         const res = await axios.post<(Visitor | Visitor2)[]>(`/api/updateVisitor`,data)
         // console.log(res.data)
         const [todayObj, totalObj] = res.data;

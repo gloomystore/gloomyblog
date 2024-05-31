@@ -37,6 +37,7 @@ function getDates() {
 
   return [fullDate, fullYesterday, fullDateTime];
 }
+
 function strip_tags(input: string, allowed?: string) {
   // 문자열에서 HTML 태그 제거하기
   // i 와 b 태그만 허용하고 그 외의 태그는 모두 제거할 때 아래와 같이 하면 됩니다.
@@ -57,7 +58,9 @@ function strip_tags(input: string, allowed?: string) {
       .replace(tags, function ($0, $1) {
         return allowedStr.indexOf('<' + $1.toLowerCase() + '>') > -1 ? $0 : '';
       })
-      .replace(nbsp, '');  // &nbsp; 제거
+      .replace(nbsp, ' ')  // &nbsp; 제거
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
   } catch (err) {
     console.log(err);
     return input;

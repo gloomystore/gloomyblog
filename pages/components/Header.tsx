@@ -1,6 +1,7 @@
 'use client'
 import { useState, useCallback } from 'react'
 import styles from '@/styles/module/Header.module.scss'
+import Link from 'next/link'
 
 export default function Header() {
   // modal
@@ -33,28 +34,28 @@ export default function Header() {
               </a>
             </li>
             <li className='active'>
-              <a
+              <Link
                 href='/board/52/1'
                 title='dev'
               >
                 <span className='t-purple'>d</span>ev
-              </a>
+              </Link>
             </li>
             <li>
-              <a
+              <Link
                 href='/board/214/1'
                 title='dayz'
               >
                 d<span className='t-green'>a</span>yz
-              </a>
+              </Link>
             </li>
             <li>
-              <a
+              <Link
                 href='/board/52/1'
                 title='comment'
               >
                 방명<span className='t-sky'>록</span>
-              </a>
+              </Link>
             </li>
           </ul>
         </div>
