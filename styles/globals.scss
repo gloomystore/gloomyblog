@@ -59,7 +59,7 @@ h1,h2,h3,h4,h5,h6,p,strong,b,u,em,i,a {line-height: 1.5;}
 // .onlyPC {display: block;}
 // .onlyTab {display: none!important;}
 .onlySP {display: none!important;}
-@media(max-width: $breakPoint) {
+@media(max-width: $breakPoint2) {
   .onlyPC {display: none!important;}
   .onlySP {display: block!important;}
 }

@@ -12,7 +12,7 @@ export default function ProfileModal() {
   /** redux */
   const [scrollBlock, setScrollBlock] = useRecoilState(ScrollBlockAtom);
 
-  const [profileModal, setProfileModal] = useRecoilState(ProfileModalAtom)
+  const [profileModal] = useRecoilState(ProfileModalAtom)
   const [profileModalActive, setProfileModalActive] = useRecoilState(ProfileModalActiveAtom)
   const [isAdmin] = useRecoilState(IsAdminAtom)
   const [stateIsAdmin, setStatesAdmin] = useState(false)
@@ -34,7 +34,7 @@ export default function ProfileModal() {
       <div className='modal-content modal-profile'>
         <div className='photo-zone'>
           <button>
-            <img src='https://blog.gloomy-store.com/images/members/uptownboy7/profile.jpg' alt={profileModal.BOR_mem_name} />
+            <img src={`/images/file/members/${profileModal?.BOR_mem_id ? profileModal?.BOR_mem_id : 'uptownboy7'}/profile.jpg`} alt={profileModal.BOR_mem_name} />
           </button>
         </div>
         <div className='script-zone'>

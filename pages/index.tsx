@@ -1,9 +1,10 @@
 // style
 import styles from '@/styles/module/Home.module.scss'
+import stylesBoard from '@/styles/module/Board.module.scss'
 
 // module
 import { useRecoilState } from 'recoil';
-import { IsAdminAtom, LoadAtom, MyInfoAtom, ScrollBlockAtom } from '@/store/CommonAtom'
+import { IsAdminAtom, LoadAtom, MyInfoAtom, ProfileModalActiveAtom, ProfileModalAtom, ScrollBlockAtom } from '@/store/CommonAtom'
 import HeadComponent from '@/pages/components/HeadComponent';
 import Loading from '@/pages/components/Loading';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -14,13 +15,14 @@ import pool from './api/db/mysql';
 import { RowDataPacket } from 'mysql2';
 import Link from 'next/link';
 import { strip_tags } from '@/utils/common';
+import ProfileModal from './components/ProfileModal';
 
-export const getServerSideProps = async() => {
+export const getServerSideProps = async () => {
   try {
-    // const { data } = await axios.get(process.env.NEXT_PUBLIC_API_URL + '/dummy/getBoardData.json')
     const page = 1
     const pageSize = 9
     const offset = (page - 1) * pageSize
+    const likersPageSize = 40;
     const [documentRows] = await pool.query<RowDataPacket[]>(`
       SELECT blamed_count,
       category_srl,
@@ -47,13 +49,16 @@ export const getServerSideProps = async() => {
       ORDER BY regdate DESC
       LIMIT ${pageSize} OFFSET ${offset}
     `)
-    // strip_tags
 
-    const limit200 = (str:string) => {
-      return str.slice(0, 200)
-    }
-    const rows = documentRows.map((e:any) => ({...e, content: limit200(strip_tags(e.content))}))
+    // 콘텐츠의 길이를 200자로 제한하는 함수
+    const limit200 = (str: string) => {
+      return str.slice(0, 200);
+    };
 
+    // 각 콘텐츠의 태그를 제거하고 길이를 제한합니다.
+    const rows = documentRows.map((e: any) => ({ ...e, content: limit200(strip_tags(e.content)) }));
+
+    // 총 문서 수를 계산합니다.
     const [totalRows] = await pool.query<RowDataPacket[]>(`
       SELECT COUNT(*) as total
       FROM xe_documents
@@ -61,33 +66,130 @@ export const getServerSideProps = async() => {
     `);
     const totalCount = totalRows[0].total;
 
-    // 총 페이지 수를 계산합니다
-    const totalPages = Math.ceil(totalCount / pageSize)
+    // 총 페이지 수를 계산합니다.
+    const totalPages = Math.ceil(totalCount / pageSize);
 
+    // youngetable에서 likers 데이터를 가져옵니다.
+    const [likersRows] = await pool.query<RowDataPacket[]>(`
+      SELECT liker_id, liker_name, liker_like, liker_reg, liker_reg2
+      FROM youngetable
+      ORDER BY liker_reg DESC
+      LIMIT ${likersPageSize} OFFSET ${offset}
+    `);
 
-    const documents = {
-      data: rows,
-      page: {
-        currentPage: 1,
-        totalPages
-      }
-    }
-    
+    const likers = likersRows.map((liker: any) => ({
+      liker_id: liker.liker_id,
+      liker_name: liker.liker_name,
+      liker_like: liker.liker_like,
+      liker_reg: liker.liker_reg,
+      liker_reg2: liker.liker_reg2,
+    }));
+
+    // 총 likers 수를 계산합니다.
+    const [totalLikersRows] = await pool.query<RowDataPacket[]>(`
+      SELECT COUNT(*) as total
+      FROM youngetable
+    `);
+    const totalLikersCount = totalLikersRows[0].total;
+
+    // 총 페이지 수를 계산합니다.
+    const totalLikersPages = Math.ceil(totalLikersCount / likersPageSize);
+
+    // comments를 가져옵니다.
+    // documentRows.map(row => row.document_srl).join(',')
+    const [commentsRows] = await pool.query<RowDataPacket[]>(`
+      SELECT *
+      FROM xe_comments
+      WHERE document_srl IN (1)
+    `);
+
+    const comments = commentsRows.map((comment: any) => ({
+      comment_srl: comment.comment_srl,
+      module_srl: comment.module_srl,
+      document_srl: comment.document_srl,
+      parent_srl: comment.parent_srl,
+      is_secret: comment.is_secret,
+      content: comment.content,
+      voted_count: comment.voted_count,
+      blamed_count: comment.blamed_count,
+      notify_message: comment.notify_message,
+      password: comment.password,
+      user_id: comment.user_id,
+      user_name: comment.user_name,
+      nick_name: comment.nick_name,
+      member_srl: comment.member_srl,
+      email_address: comment.email_address,
+      homepage: comment.homepage,
+      uploaded_count: comment.uploaded_count,
+      regdate: comment.regdate,
+      last_update: comment.last_update,
+      ipaddress: comment.ipaddress,
+      list_order: comment.list_order,
+      status: comment.status,
+    }));
+
+    // 총 comments 수를 계산합니다.
+    const totalCommentsCount = commentsRows.length;
+
+    // comments의 페이지 수를 계산합니다.
+    const totalCommentsPages = Math.ceil(totalCommentsCount / pageSize);
+
+    // datas 객체를 구성합니다.
+    const datas = {
+      documents: {
+        content: rows,
+        page: {
+          currentPage: 1,
+          totalPages,
+        },
+      },
+      likers: {
+        content: likers,
+        page: {
+          currentPage: 1,
+          totalPages: totalLikersPages,
+        },
+      },
+      comments: {
+        content: comments,
+        page: {
+          currentPage: 1,
+          totalPages: totalCommentsPages,
+        },
+      },
+    };
+
     return {
       props: {
-        documents: JSON.parse(JSON.stringify(documents))
-      }
+        datas: JSON.parse(JSON.stringify(datas)),
+      },
     }
   } catch(er) {
     console.log(er)
     return {
       props: {
-        documents: {
-          data: [],
-          page: {
-            currentPage: 0,
-            totalPages: 0
-          }
+        datas: {
+          documents: {
+            content: [],
+            page: {
+              currentPage: 1,
+              totalPages :1,
+            },
+          },
+          likers: {
+            content: [],
+            page: {
+              currentPage: 1,
+              totalPages: 1,
+            },
+          },
+          comments: {
+            content: [],
+            page: {
+              currentPage: 1,
+              totalPages: 1,
+            },
+          },
         }
       }
     }
@@ -95,14 +197,30 @@ export const getServerSideProps = async() => {
 }
 
 export default function Home({
-  documents = {
-    data: [],
-    page: {
-      currentPage: 0,
-      totalPages: 0
-    }
+  datas = {
+    documents: {
+      data: [],
+      page: {
+        currentPage: 0,
+        totalPages: 0
+      },
+    },
+    likers: {
+      content: [],
+      page: {
+        currentPage: 1,
+        totalPages: 1,
+      },
+    },
+    comments: {
+      content: [],
+      page: {
+        currentPage: 1,
+        totalPages: 1,
+      },
+    },
   }
-}:{documents:any}) {
+}:{datas:any}) {
   // 로딩
   const [scrollBlock, setScrollBlock] = useRecoilState(ScrollBlockAtom);
   const [load, setLoad] = useRecoilState(LoadAtom)
@@ -110,34 +228,13 @@ export default function Home({
   const [isContentLoad, setIsContentLoad] = useState(false)
   const loadWord = useMemo(() => '로딩중', [])
 
-  // modal
-  const [activeModal, setActiveModal] = useState(false)
-  const closeModal = useCallback(() => {
-    setActiveModal(false)
-  }, [activeModal])
-  const [profileId, setProfileId] = useState(0)
-  const profileView = useCallback((id:string) => {
-
-  }, [profileId])
-  const initialState = useMemo(() => ({
-    data: [],
-    page: {
-      currentPage: 0,
-      totalPages: 0
-    }
-  }), [])
-  const [Document, setDocument] = useState(initialState)
-  useEffect(() => {
-    const res = documents
-    setDocument(res)
-  },[documents])
-
+  const [Document, setDocument] = useState(datas.documents)
 
   const [currentPage, setCurrentPage] = useState(1)
   const [paging, setPaging] = useState([1])
   const [hydrated, setHydrated] = useState(false)
   useEffect(() => {
-    if (Document.page.totalPages > 0) {
+    if (Document?.page?.totalPages > 0) {
       const totalPages = Document.page.totalPages;
       let startPage = Math.max(1, currentPage - 3);
       let endPage = Math.min(totalPages, currentPage + 3);
@@ -168,27 +265,89 @@ export default function Home({
   }, [currentPage])
   const getBoardData = useCallback(async(page:number) => {
     try {
+      console.log('page', page)
       const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/board/all/${page}`)
+      console.log('res', res.data)
       if(res.status === 200) {
-        setDocument(JSON.parse(res.data))
+        setDocument(res.data)
       } else throw new Error('network failed')
     } catch(err) {
       console.log(err)
-      setDocument(initialState)
+      setDocument(datas.documents)
     }
   }, [])
 
   const titleRef = useRef<HTMLHeadingElement>(null)
 
-  const pages = [1, 2]; // 페이지 번호 예시
+  // liker data
+  const [likers, setLikers] = useState(datas.likers)
+  const [currentLikerPage, setCurrentLikerPage] = useState(1)
+  const [likerPaging, setLikerPaging]:[number[], Function] = useState([1])
+  const [likerRandomKey, setLikerRandomKey] = useState(0)
+  useEffect(() => {
+    if (likers.page.totalPages > 0) {
+      const totalPages = likers.page.totalPages;
+      let startPage = Math.max(1, currentLikerPage - 3);
+      let endPage = Math.min(totalPages, currentLikerPage + 3);
+  
+      if (currentLikerPage <= 4) {
+        startPage = 1;
+        endPage = Math.min(10, totalPages);
+      } else if (currentLikerPage > totalPages - 6) {
+        startPage = Math.max(totalPages - 9, 1);
+        endPage = totalPages;
+      }
+  
+      const newPaging = [];
+      for (let i = startPage; i <= endPage; i++) {
+        newPaging.push(i);
+      }
+      setLikerPaging(newPaging);
+    }
+  }, [likers, currentLikerPage])
+  const changeLikerPage = useCallback((page:number) => {
+    if(!hydrated) setHydrated(true)
+    setLikerRandomKey(Math.random() * 10 / 5)
+    console.log(page)
+    setCurrentLikerPage(page)
+  }, [likerRandomKey, currentLikerPage])
 
-  const getBoardPage = (page: number, moduleSrl: string) => {
-    console.log(`Load page ${page} for module ${moduleSrl}`);
-  };
+  const likerTitleRef = useRef<HTMLHeadingElement>(null)
+  useEffect(() => {
+    if(!likerTitleRef.current) return
+    getLikerData(currentLikerPage)
+    likerTitleRef.current.scrollIntoView()
+  }, [currentLikerPage])
+  const getLikerData = useCallback(async(page:number) => {
+    try {
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/liker/${page}`)
+      if(res.status === 200) {
+        setLikers(res.data)
+      } else throw new Error('network failed')
+    } catch(err) {
+      console.log(err)
+      setDocument(datas.documents)
+    }
+  }, [])
 
-  const getBoardPageBtn = (direction: string, moduleSrl: string) => {
-    console.log(`Load page in direction ${direction} for module ${moduleSrl}`);
-  };
+  // modal
+  const [profileModal, setProfileModal] = useRecoilState(ProfileModalAtom)
+  const [profileModalActive, setProfileModalActive] = useRecoilState(ProfileModalActiveAtom)
+  const profileView = useCallback(async(id:string) => {
+    try {
+      const data = { id }
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/common/getProfile`, data)
+      if(res.status === 200) {
+        console.log(res.data)
+        setProfileModal(res.data)
+        setProfileModalActive(true)
+      }
+    } catch(err) {
+      console.log(err)
+    }
+  }, [profileModal, profileModalActive])
+
+  // comment data 
 
 
   return (
@@ -220,7 +379,7 @@ export default function Home({
               <div className='gallery' id='gallery'>
                 {
                 !hydrated &&
-                documents?.data?.map((item:any, idx:number) => (
+                datas?.documents?.content?.map((item:any, idx:number) => (
                   <div key={idx + 'card' + item.id} className='card_wrapper js-fadeIn' itemProp='workExample'>
                     <Link
                       href={`/board/all/document/${item.document_srl}`}
@@ -257,7 +416,7 @@ export default function Home({
                 }
                 {
                   hydrated &&
-                Document && Document?.data?.length && Document?.data?.map((item:any, idx:number) => (
+                Document && Document?.content?.length && Document?.content?.map((item:any, idx:number) => (
                   <div key={idx + 'card' + item.id} className='card_wrapper js-fadeIn' itemProp='workExample'>
                     <Link
                       href={`/board/all/document/${item.document_srl}`}
@@ -308,7 +467,7 @@ export default function Home({
                   aria-label='arrow_btn_single_prev'
                   onClick={() => {
                     if(currentPage > 1) {
-                      changePage(currentPage + 1)
+                      changePage(currentPage - 1)
                     }
                   }}
                   id='pageBoardLeft'
@@ -333,7 +492,7 @@ export default function Home({
                   className='arrow_btn single next'
                   aria-label='arrow_btn_single_next'
                   onClick={() => {
-                    if(currentPage < documents.page.totalPages) {
+                    if(currentPage < Document.page.totalPages) {
                       changePage(currentPage + 1)
                     }
                   }}
@@ -345,7 +504,7 @@ export default function Home({
                   type='button'
                   className='arrow_btn double last'
                   aria-label='arrow_btn_double_last'
-                  onClick={() => changePage(documents.page.totalPages)}
+                  onClick={() => changePage(Document.page.totalPages)}
                   id='pageBoardRightDouble'
                 >
                   <i className='fa fa-angle-double-right'></i>
@@ -355,6 +514,315 @@ export default function Home({
           </main>
         </div>
       </div>
+      <section className={styles['section-flower']}>
+        <div className={styles['text-area']}>
+          <h4> I Can Do This </h4>
+          <h5 className={`${styles['h5']}`}>Web Development</h5>
+          <p>이 블로그는 <span>개인서버</span>로 배포되고 있습니다.</p>
+          <div className={styles['cans']}>
+            <div className={styles['can']}><span></span>
+              <p>기획 - 디자인 - 프론트엔드 - 백엔드 <br className='onlySP'/>- 서버 도메인 - 서비스</p>
+            </div>
+            <div className={`${styles['can']} ${styles['right']}`}><span></span>
+              <p>PPT - Ps(Xd) - React - PHP,mySQL - NAS</p>
+            </div>
+          </div>
+        </div>
+        <div className={styles['motion-area']}>
+          <svg version='1.1' className={`${styles['flower_small']} ${styles['flower1_1']}`} xmlns='http://www.w3.org/2000/svg' xmlnsXlink='http://www.w3.org/1999/xlink' x='0px' y='0px' width='80px' height='80px' viewBox='0 0 50 50' enableBackground='new 0 0 50 50' xmlSpace='preserve'>
+            <path fill='#ffffff' d='M16.758,49.942c-6.39,0-11.587-5.011-11.587-11.17c0-1.83,0.473-3.635,1.375-5.256c-4.059-1.84-6.65-5.746-6.65-10.103
+                  c0-6.159,5.198-11.169,11.586-11.169c0.645,0,1.304,0.057,1.969,0.171c-0.05-0.411-0.074-0.804-0.074-1.189
+                  c0-6.159,5.199-11.169,11.587-11.169c6.389,0,11.586,5.01,11.586,11.169c0,0.391-0.024,0.788-0.074,1.202
+                  c0.689-0.123,1.376-0.184,2.041-0.184c6.39,0,11.586,5.011,11.586,11.169c0,4.137-2.417,7.956-6.202,9.879
+                  c0.853,1.585,1.3,3.345,1.3,5.123c0,6.158-5.196,11.17-11.585,11.17c-3.101,0-6.074-1.213-8.25-3.345
+                  C23.167,48.6,20.063,49.942,16.758,49.942z M11.482,13.247c-5.815,0-10.547,4.561-10.547,10.167c0,4.14,2.569,7.83,6.545,9.404
+                  c0.14,0.056,0.249,0.168,0.296,0.307c0.048,0.139,0.03,0.29-0.048,0.416c-0.993,1.588-1.518,3.396-1.518,5.231
+                  c0,5.606,4.732,10.168,10.548,10.168c3.188,0,6.172-1.372,8.188-3.766c0.096-0.114,0.239-0.183,0.392-0.186
+                  c0.142,0,0.298,0.059,0.4,0.168c2.006,2.178,4.878,3.427,7.878,3.427c5.815,0,10.546-4.563,10.546-10.168
+                  c0-1.778-0.492-3.538-1.425-5.088c-0.074-0.121-0.092-0.267-0.048-0.401c0.045-0.134,0.145-0.244,0.276-0.304
+                  c3.706-1.666,6.1-5.282,6.1-9.209c0-5.607-4.732-10.167-10.548-10.167c-0.822,0-1.678,0.104-2.538,0.31
+                  c-0.173,0.041-0.35-0.004-0.479-0.12c-0.13-0.115-0.188-0.285-0.158-0.452c0.114-0.628,0.168-1.203,0.168-1.757
+                  c0-5.607-4.731-10.167-10.546-10.167c-5.815,0-10.547,4.56-10.547,10.167c0,0.548,0.054,1.117,0.166,1.74
+                  c0.03,0.166-0.029,0.335-0.156,0.45c-0.129,0.115-0.307,0.162-0.477,0.122C13.114,13.345,12.283,13.247,11.482,13.247z'></path>
+          </svg>
+          <svg version='1.1' className={`${styles['flower_small']} ${styles['flower2_2']}`} xmlns='http://www.w3.org/2000/svg' xmlnsXlink='http://www.w3.org/1999/xlink' x='0px' y='0px' width='80px' height='80px' viewBox='0 0 50 50' enableBackground='new 0 0 50 50' xmlSpace='preserve'>
+            <path fill='#ffffff' d='M16.758,49.942c-6.39,0-11.587-5.011-11.587-11.17c0-1.83,0.473-3.635,1.375-5.256c-4.059-1.84-6.65-5.746-6.65-10.103
+                  c0-6.159,5.198-11.169,11.586-11.169c0.645,0,1.304,0.057,1.969,0.171c-0.05-0.411-0.074-0.804-0.074-1.189
+                  c0-6.159,5.199-11.169,11.587-11.169c6.389,0,11.586,5.01,11.586,11.169c0,0.391-0.024,0.788-0.074,1.202
+                  c0.689-0.123,1.376-0.184,2.041-0.184c6.39,0,11.586,5.011,11.586,11.169c0,4.137-2.417,7.956-6.202,9.879
+                  c0.853,1.585,1.3,3.345,1.3,5.123c0,6.158-5.196,11.17-11.585,11.17c-3.101,0-6.074-1.213-8.25-3.345
+                  C23.167,48.6,20.063,49.942,16.758,49.942z M11.482,13.247c-5.815,0-10.547,4.561-10.547,10.167c0,4.14,2.569,7.83,6.545,9.404
+                  c0.14,0.056,0.249,0.168,0.296,0.307c0.048,0.139,0.03,0.29-0.048,0.416c-0.993,1.588-1.518,3.396-1.518,5.231
+                  c0,5.606,4.732,10.168,10.548,10.168c3.188,0,6.172-1.372,8.188-3.766c0.096-0.114,0.239-0.183,0.392-0.186
+                  c0.142,0,0.298,0.059,0.4,0.168c2.006,2.178,4.878,3.427,7.878,3.427c5.815,0,10.546-4.563,10.546-10.168
+                  c0-1.778-0.492-3.538-1.425-5.088c-0.074-0.121-0.092-0.267-0.048-0.401c0.045-0.134,0.145-0.244,0.276-0.304
+                  c3.706-1.666,6.1-5.282,6.1-9.209c0-5.607-4.732-10.167-10.548-10.167c-0.822,0-1.678,0.104-2.538,0.31
+                  c-0.173,0.041-0.35-0.004-0.479-0.12c-0.13-0.115-0.188-0.285-0.158-0.452c0.114-0.628,0.168-1.203,0.168-1.757
+                  c0-5.607-4.731-10.167-10.546-10.167c-5.815,0-10.547,4.56-10.547,10.167c0,0.548,0.054,1.117,0.166,1.74
+                  c0.03,0.166-0.029,0.335-0.156,0.45c-0.129,0.115-0.307,0.162-0.477,0.122C13.114,13.345,12.283,13.247,11.482,13.247z'></path>
+          </svg>
+          <svg version='1.1' className={`${styles['flower_small']} ${styles['flower3']}`} xmlns='http://www.w3.org/2000/svg' xmlnsXlink='http://www.w3.org/1999/xlink' x='0px' y='0px' width='80px' height='80px' viewBox='0 0 50 50' enableBackground='new 0 0 50 50' xmlSpace='preserve'>
+            <path fill='#ffffff' d='M16.758,49.942c-6.39,0-11.587-5.011-11.587-11.17c0-1.83,0.473-3.635,1.375-5.256c-4.059-1.84-6.65-5.746-6.65-10.103
+                  c0-6.159,5.198-11.169,11.586-11.169c0.645,0,1.304,0.057,1.969,0.171c-0.05-0.411-0.074-0.804-0.074-1.189
+                  c0-6.159,5.199-11.169,11.587-11.169c6.389,0,11.586,5.01,11.586,11.169c0,0.391-0.024,0.788-0.074,1.202
+                  c0.689-0.123,1.376-0.184,2.041-0.184c6.39,0,11.586,5.011,11.586,11.169c0,4.137-2.417,7.956-6.202,9.879
+                  c0.853,1.585,1.3,3.345,1.3,5.123c0,6.158-5.196,11.17-11.585,11.17c-3.101,0-6.074-1.213-8.25-3.345
+                  C23.167,48.6,20.063,49.942,16.758,49.942z M11.482,13.247c-5.815,0-10.547,4.561-10.547,10.167c0,4.14,2.569,7.83,6.545,9.404
+                  c0.14,0.056,0.249,0.168,0.296,0.307c0.048,0.139,0.03,0.29-0.048,0.416c-0.993,1.588-1.518,3.396-1.518,5.231
+                  c0,5.606,4.732,10.168,10.548,10.168c3.188,0,6.172-1.372,8.188-3.766c0.096-0.114,0.239-0.183,0.392-0.186
+                  c0.142,0,0.298,0.059,0.4,0.168c2.006,2.178,4.878,3.427,7.878,3.427c5.815,0,10.546-4.563,10.546-10.168
+                  c0-1.778-0.492-3.538-1.425-5.088c-0.074-0.121-0.092-0.267-0.048-0.401c0.045-0.134,0.145-0.244,0.276-0.304
+                  c3.706-1.666,6.1-5.282,6.1-9.209c0-5.607-4.732-10.167-10.548-10.167c-0.822,0-1.678,0.104-2.538,0.31
+                  c-0.173,0.041-0.35-0.004-0.479-0.12c-0.13-0.115-0.188-0.285-0.158-0.452c0.114-0.628,0.168-1.203,0.168-1.757
+                  c0-5.607-4.731-10.167-10.546-10.167c-5.815,0-10.547,4.56-10.547,10.167c0,0.548,0.054,1.117,0.166,1.74
+                  c0.03,0.166-0.029,0.335-0.156,0.45c-0.129,0.115-0.307,0.162-0.477,0.122C13.114,13.345,12.283,13.247,11.482,13.247z'></path>
+          </svg>
+
+
+          <svg version='1.1' className={`${styles['flower_small']} ${styles['flower1_2']} onlyPC`} xmlns='http://www.w3.org/2000/svg' xmlnsXlink='http://www.w3.org/1999/xlink' x='0px' y='0px' width='80px' height='80px' viewBox='0 0 50 50' enableBackground='new 0 0 50 50' xmlSpace='preserve'>
+            <path fill='#ffffff' d='M16.758,49.942c-6.39,0-11.587-5.011-11.587-11.17c0-1.83,0.473-3.635,1.375-5.256c-4.059-1.84-6.65-5.746-6.65-10.103
+                  c0-6.159,5.198-11.169,11.586-11.169c0.645,0,1.304,0.057,1.969,0.171c-0.05-0.411-0.074-0.804-0.074-1.189
+                  c0-6.159,5.199-11.169,11.587-11.169c6.389,0,11.586,5.01,11.586,11.169c0,0.391-0.024,0.788-0.074,1.202
+                  c0.689-0.123,1.376-0.184,2.041-0.184c6.39,0,11.586,5.011,11.586,11.169c0,4.137-2.417,7.956-6.202,9.879
+                  c0.853,1.585,1.3,3.345,1.3,5.123c0,6.158-5.196,11.17-11.585,11.17c-3.101,0-6.074-1.213-8.25-3.345
+                  C23.167,48.6,20.063,49.942,16.758,49.942z M11.482,13.247c-5.815,0-10.547,4.561-10.547,10.167c0,4.14,2.569,7.83,6.545,9.404
+                  c0.14,0.056,0.249,0.168,0.296,0.307c0.048,0.139,0.03,0.29-0.048,0.416c-0.993,1.588-1.518,3.396-1.518,5.231
+                  c0,5.606,4.732,10.168,10.548,10.168c3.188,0,6.172-1.372,8.188-3.766c0.096-0.114,0.239-0.183,0.392-0.186
+                  c0.142,0,0.298,0.059,0.4,0.168c2.006,2.178,4.878,3.427,7.878,3.427c5.815,0,10.546-4.563,10.546-10.168
+                  c0-1.778-0.492-3.538-1.425-5.088c-0.074-0.121-0.092-0.267-0.048-0.401c0.045-0.134,0.145-0.244,0.276-0.304
+                  c3.706-1.666,6.1-5.282,6.1-9.209c0-5.607-4.732-10.167-10.548-10.167c-0.822,0-1.678,0.104-2.538,0.31
+                  c-0.173,0.041-0.35-0.004-0.479-0.12c-0.13-0.115-0.188-0.285-0.158-0.452c0.114-0.628,0.168-1.203,0.168-1.757
+                  c0-5.607-4.731-10.167-10.546-10.167c-5.815,0-10.547,4.56-10.547,10.167c0,0.548,0.054,1.117,0.166,1.74
+                  c0.03,0.166-0.029,0.335-0.156,0.45c-0.129,0.115-0.307,0.162-0.477,0.122C13.114,13.345,12.283,13.247,11.482,13.247z'></path>
+          </svg>
+
+          <svg version='1.1' className={`${styles['flower_small']} ${styles['flower1_3']} onlyPC`} xmlns='http://www.w3.org/2000/svg' xmlnsXlink='http://www.w3.org/1999/xlink' x='0px' y='0px' width='80px' height='80px' viewBox='0 0 50 50' enableBackground='new 0 0 50 50' xmlSpace='preserve'>
+            <path fill='#ffffff' d='M16.758,49.942c-6.39,0-11.587-5.011-11.587-11.17c0-1.83,0.473-3.635,1.375-5.256c-4.059-1.84-6.65-5.746-6.65-10.103
+                  c0-6.159,5.198-11.169,11.586-11.169c0.645,0,1.304,0.057,1.969,0.171c-0.05-0.411-0.074-0.804-0.074-1.189
+                  c0-6.159,5.199-11.169,11.587-11.169c6.389,0,11.586,5.01,11.586,11.169c0,0.391-0.024,0.788-0.074,1.202
+                  c0.689-0.123,1.376-0.184,2.041-0.184c6.39,0,11.586,5.011,11.586,11.169c0,4.137-2.417,7.956-6.202,9.879
+                  c0.853,1.585,1.3,3.345,1.3,5.123c0,6.158-5.196,11.17-11.585,11.17c-3.101,0-6.074-1.213-8.25-3.345
+                  C23.167,48.6,20.063,49.942,16.758,49.942z M11.482,13.247c-5.815,0-10.547,4.561-10.547,10.167c0,4.14,2.569,7.83,6.545,9.404
+                  c0.14,0.056,0.249,0.168,0.296,0.307c0.048,0.139,0.03,0.29-0.048,0.416c-0.993,1.588-1.518,3.396-1.518,5.231
+                  c0,5.606,4.732,10.168,10.548,10.168c3.188,0,6.172-1.372,8.188-3.766c0.096-0.114,0.239-0.183,0.392-0.186
+                  c0.142,0,0.298,0.059,0.4,0.168c2.006,2.178,4.878,3.427,7.878,3.427c5.815,0,10.546-4.563,10.546-10.168
+                  c0-1.778-0.492-3.538-1.425-5.088c-0.074-0.121-0.092-0.267-0.048-0.401c0.045-0.134,0.145-0.244,0.276-0.304
+                  c3.706-1.666,6.1-5.282,6.1-9.209c0-5.607-4.732-10.167-10.548-10.167c-0.822,0-1.678,0.104-2.538,0.31
+                  c-0.173,0.041-0.35-0.004-0.479-0.12c-0.13-0.115-0.188-0.285-0.158-0.452c0.114-0.628,0.168-1.203,0.168-1.757
+                  c0-5.607-4.731-10.167-10.546-10.167c-5.815,0-10.547,4.56-10.547,10.167c0,0.548,0.054,1.117,0.166,1.74
+                  c0.03,0.166-0.029,0.335-0.156,0.45c-0.129,0.115-0.307,0.162-0.477,0.122C13.114,13.345,12.283,13.247,11.482,13.247z'></path>
+          </svg>
+          {/* <!-- //작은 꽃 --> */}
+
+          {/* <!-- 큰 꽃 --> */}
+          <svg version='1.1' className={`${styles['flower_mid']} ${styles['flower4']}`} xmlns='http://www.w3.org/2000/svg' xmlnsXlink='http://www.w3.org/1999/xlink' x='0px' y='0px' width='120px' height='120px' viewBox='0 0 50 50' enableBackground='new 0 0 50 50' xmlSpace='preserve'>
+            <path fill='#ffffff' d='M16.758,49.942c-6.39,0-11.587-5.011-11.587-11.17c0-1.83,0.473-3.635,1.375-5.256c-4.059-1.84-6.65-5.746-6.65-10.103
+                  c0-6.159,5.198-11.169,11.586-11.169c0.645,0,1.304,0.057,1.969,0.171c-0.05-0.411-0.074-0.804-0.074-1.189
+                  c0-6.159,5.199-11.169,11.587-11.169c6.389,0,11.586,5.01,11.586,11.169c0,0.391-0.024,0.788-0.074,1.202
+                  c0.689-0.123,1.376-0.184,2.041-0.184c6.39,0,11.586,5.011,11.586,11.169c0,4.137-2.417,7.956-6.202,9.879
+                  c0.853,1.585,1.3,3.345,1.3,5.123c0,6.158-5.196,11.17-11.585,11.17c-3.101,0-6.074-1.213-8.25-3.345
+                  C23.167,48.6,20.063,49.942,16.758,49.942z M11.482,13.247c-5.815,0-10.547,4.561-10.547,10.167c0,4.14,2.569,7.83,6.545,9.404
+                  c0.14,0.056,0.249,0.168,0.296,0.307c0.048,0.139,0.03,0.29-0.048,0.416c-0.993,1.588-1.518,3.396-1.518,5.231
+                  c0,5.606,4.732,10.168,10.548,10.168c3.188,0,6.172-1.372,8.188-3.766c0.096-0.114,0.239-0.183,0.392-0.186
+                  c0.142,0,0.298,0.059,0.4,0.168c2.006,2.178,4.878,3.427,7.878,3.427c5.815,0,10.546-4.563,10.546-10.168
+                  c0-1.778-0.492-3.538-1.425-5.088c-0.074-0.121-0.092-0.267-0.048-0.401c0.045-0.134,0.145-0.244,0.276-0.304
+                  c3.706-1.666,6.1-5.282,6.1-9.209c0-5.607-4.732-10.167-10.548-10.167c-0.822,0-1.678,0.104-2.538,0.31
+                  c-0.173,0.041-0.35-0.004-0.479-0.12c-0.13-0.115-0.188-0.285-0.158-0.452c0.114-0.628,0.168-1.203,0.168-1.757
+                  c0-5.607-4.731-10.167-10.546-10.167c-5.815,0-10.547,4.56-10.547,10.167c0,0.548,0.054,1.117,0.166,1.74
+                  c0.03,0.166-0.029,0.335-0.156,0.45c-0.129,0.115-0.307,0.162-0.477,0.122C13.114,13.345,12.283,13.247,11.482,13.247z'></path>
+          </svg>
+          <svg version='1.1' className={`${styles['flower_mid']} ${styles['flower5']}`} xmlns='http://www.w3.org/2000/svg' xmlnsXlink='http://www.w3.org/1999/xlink' x='0px' y='0px' width='120px' height='120px' viewBox='0 0 50 50' enableBackground='new 0 0 50 50' xmlSpace='preserve'>
+            <path fill='#ffffff' d='M16.758,49.942c-6.39,0-11.587-5.011-11.587-11.17c0-1.83,0.473-3.635,1.375-5.256c-4.059-1.84-6.65-5.746-6.65-10.103
+                  c0-6.159,5.198-11.169,11.586-11.169c0.645,0,1.304,0.057,1.969,0.171c-0.05-0.411-0.074-0.804-0.074-1.189
+                  c0-6.159,5.199-11.169,11.587-11.169c6.389,0,11.586,5.01,11.586,11.169c0,0.391-0.024,0.788-0.074,1.202
+                  c0.689-0.123,1.376-0.184,2.041-0.184c6.39,0,11.586,5.011,11.586,11.169c0,4.137-2.417,7.956-6.202,9.879
+                  c0.853,1.585,1.3,3.345,1.3,5.123c0,6.158-5.196,11.17-11.585,11.17c-3.101,0-6.074-1.213-8.25-3.345
+                  C23.167,48.6,20.063,49.942,16.758,49.942z M11.482,13.247c-5.815,0-10.547,4.561-10.547,10.167c0,4.14,2.569,7.83,6.545,9.404
+                  c0.14,0.056,0.249,0.168,0.296,0.307c0.048,0.139,0.03,0.29-0.048,0.416c-0.993,1.588-1.518,3.396-1.518,5.231
+                  c0,5.606,4.732,10.168,10.548,10.168c3.188,0,6.172-1.372,8.188-3.766c0.096-0.114,0.239-0.183,0.392-0.186
+                  c0.142,0,0.298,0.059,0.4,0.168c2.006,2.178,4.878,3.427,7.878,3.427c5.815,0,10.546-4.563,10.546-10.168
+                  c0-1.778-0.492-3.538-1.425-5.088c-0.074-0.121-0.092-0.267-0.048-0.401c0.045-0.134,0.145-0.244,0.276-0.304
+                  c3.706-1.666,6.1-5.282,6.1-9.209c0-5.607-4.732-10.167-10.548-10.167c-0.822,0-1.678,0.104-2.538,0.31
+                  c-0.173,0.041-0.35-0.004-0.479-0.12c-0.13-0.115-0.188-0.285-0.158-0.452c0.114-0.628,0.168-1.203,0.168-1.757
+                  c0-5.607-4.731-10.167-10.546-10.167c-5.815,0-10.547,4.56-10.547,10.167c0,0.548,0.054,1.117,0.166,1.74
+                  c0.03,0.166-0.029,0.335-0.156,0.45c-0.129,0.115-0.307,0.162-0.477,0.122C13.114,13.345,12.283,13.247,11.482,13.247z'></path>
+          </svg>
+          {/* <!-- //큰 꽃 --> */}
+
+          {/* <!-- 존나 큰 꽃 --> */}
+          <svg version='1.1' className={`${styles['flower_mid']} ${styles['flower6']}`} xmlns='http://www.w3.org/2000/svg' xmlnsXlink='http://www.w3.org/1999/xlink' x='0px' y='0px' width='590px' height='590px' viewBox='0 0 50 50' enableBackground='new 0 0 50 50' xmlSpace='preserve'>
+            <path fill='#ffffff' d='M16.758,49.942c-6.39,0-11.587-5.011-11.587-11.17c0-1.83,0.473-3.635,1.375-5.256c-4.059-1.84-6.65-5.746-6.65-10.103
+                  c0-6.159,5.198-11.169,11.586-11.169c0.645,0,1.304,0.057,1.969,0.171c-0.05-0.411-0.074-0.804-0.074-1.189
+                  c0-6.159,5.199-11.169,11.587-11.169c6.389,0,11.586,5.01,11.586,11.169c0,0.391-0.024,0.788-0.074,1.202
+                  c0.689-0.123,1.376-0.184,2.041-0.184c6.39,0,11.586,5.011,11.586,11.169c0,4.137-2.417,7.956-6.202,9.879
+                  c0.853,1.585,1.3,3.345,1.3,5.123c0,6.158-5.196,11.17-11.585,11.17c-3.101,0-6.074-1.213-8.25-3.345
+                  C23.167,48.6,20.063,49.942,16.758,49.942z M11.482,13.247c-5.815,0-10.547,4.561-10.547,10.167c0,4.14,2.569,7.83,6.545,9.404
+                  c0.14,0.056,0.249,0.168,0.296,0.307c0.048,0.139,0.03,0.29-0.048,0.416c-0.993,1.588-1.518,3.396-1.518,5.231
+                  c0,5.606,4.732,10.168,10.548,10.168c3.188,0,6.172-1.372,8.188-3.766c0.096-0.114,0.239-0.183,0.392-0.186
+                  c0.142,0,0.298,0.059,0.4,0.168c2.006,2.178,4.878,3.427,7.878,3.427c5.815,0,10.546-4.563,10.546-10.168
+                  c0-1.778-0.492-3.538-1.425-5.088c-0.074-0.121-0.092-0.267-0.048-0.401c0.045-0.134,0.145-0.244,0.276-0.304
+                  c3.706-1.666,6.1-5.282,6.1-9.209c0-5.607-4.732-10.167-10.548-10.167c-0.822,0-1.678,0.104-2.538,0.31
+                  c-0.173,0.041-0.35-0.004-0.479-0.12c-0.13-0.115-0.188-0.285-0.158-0.452c0.114-0.628,0.168-1.203,0.168-1.757
+                  c0-5.607-4.731-10.167-10.546-10.167c-5.815,0-10.547,4.56-10.547,10.167c0,0.548,0.054,1.117,0.166,1.74
+                  c0.03,0.166-0.029,0.335-0.156,0.45c-0.129,0.115-0.307,0.162-0.477,0.122C13.114,13.345,12.283,13.247,11.482,13.247z'></path>
+          </svg>
+          <svg version='1.1' className={`${styles['flower_mid']} ${styles['flower7']}`} xmlns='http://www.w3.org/2000/svg' xmlnsXlink='http://www.w3.org/1999/xlink' x='0px' y='0px' width='300px' height='300px' viewBox='0 0 50 50' enableBackground='new 0 0 50 50' xmlSpace='preserve'>
+            <path fill='#ffffff' d='M16.758,49.942c-6.39,0-11.587-5.011-11.587-11.17c0-1.83,0.473-3.635,1.375-5.256c-4.059-1.84-6.65-5.746-6.65-10.103
+                  c0-6.159,5.198-11.169,11.586-11.169c0.645,0,1.304,0.057,1.969,0.171c-0.05-0.411-0.074-0.804-0.074-1.189
+                  c0-6.159,5.199-11.169,11.587-11.169c6.389,0,11.586,5.01,11.586,11.169c0,0.391-0.024,0.788-0.074,1.202
+                  c0.689-0.123,1.376-0.184,2.041-0.184c6.39,0,11.586,5.011,11.586,11.169c0,4.137-2.417,7.956-6.202,9.879
+                  c0.853,1.585,1.3,3.345,1.3,5.123c0,6.158-5.196,11.17-11.585,11.17c-3.101,0-6.074-1.213-8.25-3.345
+                  C23.167,48.6,20.063,49.942,16.758,49.942z M11.482,13.247c-5.815,0-10.547,4.561-10.547,10.167c0,4.14,2.569,7.83,6.545,9.404
+                  c0.14,0.056,0.249,0.168,0.296,0.307c0.048,0.139,0.03,0.29-0.048,0.416c-0.993,1.588-1.518,3.396-1.518,5.231
+                  c0,5.606,4.732,10.168,10.548,10.168c3.188,0,6.172-1.372,8.188-3.766c0.096-0.114,0.239-0.183,0.392-0.186
+                  c0.142,0,0.298,0.059,0.4,0.168c2.006,2.178,4.878,3.427,7.878,3.427c5.815,0,10.546-4.563,10.546-10.168
+                  c0-1.778-0.492-3.538-1.425-5.088c-0.074-0.121-0.092-0.267-0.048-0.401c0.045-0.134,0.145-0.244,0.276-0.304
+                  c3.706-1.666,6.1-5.282,6.1-9.209c0-5.607-4.732-10.167-10.548-10.167c-0.822,0-1.678,0.104-2.538,0.31
+                  c-0.173,0.041-0.35-0.004-0.479-0.12c-0.13-0.115-0.188-0.285-0.158-0.452c0.114-0.628,0.168-1.203,0.168-1.757
+                  c0-5.607-4.731-10.167-10.546-10.167c-5.815,0-10.547,4.56-10.547,10.167c0,0.548,0.054,1.117,0.166,1.74
+                  c0.03,0.166-0.029,0.335-0.156,0.45c-0.129,0.115-0.307,0.162-0.477,0.122C13.114,13.345,12.283,13.247,11.482,13.247z'></path>
+          </svg>
+          {/* <!-- //존나 큰꽃 --> */}
+        </div>
+      </section>
+      <section className={styles['section-liker']}>
+        <div className='pt-0'>
+          <div>
+            <div className={styles['section-liker__title']}>
+              <h2 className={`${styles['title-02']} ${styles.deco}`} itemProp='title' ref={likerTitleRef}>
+                <button>
+                  이 블로그를 <br className='onlySP' /><span>좋아하는</span> 사람들
+                </button>
+              </h2>
+            </div>
+            <div className={styles.likers}>
+              <div className={styles.likers_inner} id='likers_inner'>
+                {
+                  !hydrated ?
+                  datas?.likers?.content.map((item:any, idx:number) => (
+                    <button title={'아이디: ' + item.liker_id + '이름: ' + item.liker_name + '날짜: ' + item.liker_reg} onClick={() => profileView(item.liker_id)} className={styles.mini_profile_wrapper} key={'likers' + idx}>
+                      <img src={`/images/file/members/${item.liker_id}/mini.jpg`} alt={item.liker_id + 'Profile Photo'} className={styles.mini_profile} />
+                    </button>
+                  ))
+                  :
+                  likers.content.map((item:any, idx:number) => (
+                    <button title={'아이디: ' + item.liker_id + '이름: ' + item.liker_name + '날짜: ' + item.liker_reg} onClick={() => profileView(item.liker_id)} className={styles.mini_profile_wrapper} key={'likers' + idx}>
+                      <img src={`/images/file/members/${item.liker_id}/mini.jpg`} alt={item.liker_id + 'Profile Photo'} className={styles.mini_profile} />
+                    </button>
+                  ))
+                }
+              </div>
+              <div className='paging'>
+                <button
+                  type='button'
+                  className='arrow_btn double first'
+                  aria-label='arrow_btn_double_first'
+                  onClick={() => changeLikerPage(1)}
+                >
+                  <i className='fa fa-angle-double-left'></i>
+                </button>
+                <button
+                  type='button'
+                  className='arrow_btn single prev'
+                  aria-label='arrow_btn_single_prev'
+                  onClick={() => {
+                    if(currentLikerPage > 1) {
+                      changeLikerPage(currentLikerPage - 1)
+                    }
+                  }}
+                  id='pageBoardLeft'
+                >
+                  <i className='fa fa-angle-left'></i>
+                </button>
+                <div id='board_paging'>
+                  {likerPaging?.length && likerPaging?.map((page) => (
+                    <button
+                      key={'paging' + page}
+                      type='button'
+                      className={`paging_btn ${page === currentLikerPage && 'active'}`}
+                      aria-label={`paging_btn_${page}`}
+                      onClick={() => changeLikerPage(page)}
+                    >
+                      <i className='fa'>{page}</i>
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type='button'
+                  className='arrow_btn single next'
+                  aria-label='arrow_btn_single_next'
+                  onClick={() => {
+                    if(currentLikerPage < likers.page.totalPages) {
+                      changeLikerPage(currentLikerPage + 1)
+                    }
+                  }}
+                  id='pageBoardRight'
+                >
+                  <i className='fa fa-angle-right'></i>
+                </button>
+                <button
+                  type='button'
+                  className='arrow_btn double last'
+                  aria-label='arrow_btn_double_last'
+                  onClick={() => changeLikerPage(likers.page.totalPages)}
+                  id='pageBoardRightDouble'
+                >
+                  <i className='fa fa-angle-double-right'></i>
+                </button>
+              </div>
+              <article className={styles['like_btns']}>
+                <button className={styles['like_btn']} id='like_btn' type='submit'>
+                  <img src='/images/icon/figma.png' alt='figma' />
+                </button>
+                <p>
+                  <label htmlFor='like_btn' className={styles['like_btn_label']}>
+                    나도 좋아요 누르기
+                  </label>
+                  <img
+                    src='/images/icon/info.png'
+                    className={styles['info']}
+                    alt='회원가입을 하고 좋아요를 누를 수 있습니다'
+                    title='회원가입을 하고 좋아요를 누를 수 있습니다'
+                    onClick={() => alert('회원가입을 하고 좋아요를 누를 수 있습니다')}
+                  />
+                </p>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section className={styles['section-comment']}>
+        <div className='gallery_wrap gallery_wrap--board' itemScope={true} itemType='https://schema.org/CreativeWork'>
+          <div className={stylesBoard['content_wrap']}>
+            <div className={stylesBoard['comment']} id='comment'>
+              <div className={stylesBoard['comment_inner']} id='comment_inner'>
+                <h3 className={stylesBoard['comment_total']}>댓글: <span id='comment_total_num'>3</span></h3>
+                <div className={stylesBoard['comment_list_wrapper']} id='comment_list_wrapper'>
+                  {/* JavaScript 코드가 JSX로 변환되지 않는 부분은 따로 처리해야 합니다 */}
+                </div>
+                <form action='/php/comment/INSERT_comment.php' method='post' name='comment_form' id='comment_form' className={stylesBoard['comment_form']} data-gtm-form-interact-id='0'>
+                  <div id='comment_form_name' className={stylesBoard['comment_form_name']}>
+                    <div>
+                      <input type='text' name='comment_name' placeholder='이름' maxLength={30} required={true} data-gtm-form-interact-field-id='0' />
+                    </div>
+                    <div>
+                      <input type='password' name='comment_pass' placeholder='비밀번호' maxLength={15} required={true} autoComplete='on' data-gtm-form-interact-field-id='1' />
+                    </div>
+                    {/* 스팸 방지문구 영역은 주석 처리합니다 */}
+                    <input type='hidden' name='document_srl' value='1027' readOnly={true} tabIndex={-1} className={stylesBoard['invisible']} />
+                    <input type='hidden' name='module_srl' value='52' readOnly={true} tabIndex={-1} className={stylesBoard['invisible']} />
+                  </div>
+                  <textarea name='comment_form_txt' id='comment_form_txt' className={stylesBoard['comment_form_txt']} cols={30} rows={10} placeholder='댓글을 남겨주세요!' required={true}></textarea>
+                  <div className={stylesBoard['comment_btns']}>
+                    <input type='checkbox' className={stylesBoard['check_secret']} name='check_secret' id='check_secret' /><label htmlFor='check_secret'>비밀 댓글</label>
+                    <button type='submit'>작성</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </>
   );
 }

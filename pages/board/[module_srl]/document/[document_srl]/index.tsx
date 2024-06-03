@@ -88,9 +88,9 @@ export const getStaticProps: GetStaticProps<Props> = async (ctx: GetStaticPropsC
     }))
     // 이전 글 가져오기
     const this_regdate = (row[0] as any).regdate;
-    console.log('this_regdate')
-    console.log(this_regdate)
-    console.log('this_regdate')
+    // console.log('this_regdate')
+    // console.log(this_regdate)
+    // console.log('this_regdate')
     const [beforeRows] = await pool.query(
       `SELECT * FROM (SELECT * FROM xe_documents WHERE status = 'PUBLIC' AND module_srl = ? AND regdate > ? ORDER BY regdate LIMIT 2) tmp ORDER BY regdate DESC`,
       [module_srl, this_regdate]

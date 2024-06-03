@@ -57,6 +57,8 @@ export default function Login () {
       console.log(err)
       if(err?.response?.data?.message) {
         alert(err?.response?.data?.message)
+      } else if(err?.code === 500) {
+        alert('서버에 문제가 발생 했습니다')
       }
     }
   };
