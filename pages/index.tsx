@@ -15,7 +15,7 @@ import pool from './api/db/mysql';
 import { RowDataPacket } from 'mysql2';
 import Link from 'next/link';
 import { strip_tags } from '@/utils/common';
-import ProfileModal from './components/ProfileModal';
+import Image from 'next/image';
 
 export const getServerSideProps = async () => {
   try {
@@ -23,6 +23,8 @@ export const getServerSideProps = async () => {
     const pageSize = 9
     const offset = (page - 1) * pageSize
     const likersPageSize = 40;
+    const commentsPageSize = 30;
+    
     const [documentRows] = await pool.query<RowDataPacket[]>(`
       SELECT blamed_count,
       category_srl,
@@ -96,11 +98,12 @@ export const getServerSideProps = async () => {
     const totalLikersPages = Math.ceil(totalLikersCount / likersPageSize);
 
     // comments를 가져옵니다.
-    // documentRows.map(row => row.document_srl).join(',')
     const [commentsRows] = await pool.query<RowDataPacket[]>(`
       SELECT *
       FROM xe_comments
-      WHERE document_srl IN (1)
+      WHERE document_srl IN (201)
+      ORDER BY regdate DESC
+      LIMIT ${commentsPageSize} OFFSET ${offset}
     `);
 
     const comments = commentsRows.map((comment: any) => ({
@@ -132,7 +135,7 @@ export const getServerSideProps = async () => {
     const totalCommentsCount = commentsRows.length;
 
     // comments의 페이지 수를 계산합니다.
-    const totalCommentsPages = Math.ceil(totalCommentsCount / pageSize);
+    const totalCommentsPages = Math.ceil(totalCommentsCount / commentsPageSize);
 
     // datas 객체를 구성합니다.
     const datas = {
@@ -221,6 +224,11 @@ export default function Home({
     },
   }
 }:{datas:any}) {
+
+  // store
+  const [myInfo, setMyInfo]:[(string | null), Function] = useRecoilState(MyInfoAtom)
+  const [isAdmin, setIsAdmin] = useRecoilState(IsAdminAtom)
+
   // 로딩
   const [scrollBlock, setScrollBlock] = useRecoilState(ScrollBlockAtom);
   const [load, setLoad] = useRecoilState(LoadAtom)
@@ -326,15 +334,25 @@ export default function Home({
       } else throw new Error('network failed')
     } catch(err) {
       console.log(err)
-      setDocument(datas.documents)
+      setDocument(datas.likers)
     }
   }, [])
 
   // modal
   const [profileModal, setProfileModal] = useRecoilState(ProfileModalAtom)
   const [profileModalActive, setProfileModalActive] = useRecoilState(ProfileModalActiveAtom)
-  const profileView = useCallback(async(id:string) => {
+  const profileView = useCallback(async(id?:(string | undefined), name?:string) => {
     try {
+      if(!id && name) {
+        setProfileModal({
+          BOR_mem_idx: '',
+          BOR_mem_id: '',
+          BOR_mem_name: name,
+          BOR_mem_email: '',
+          BOR_mem_regi_day: ''
+        })
+        setProfileModalActive(true)
+      }
       const data = { id }
       const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/common/getProfile`, data)
       if(res.status === 200) {
@@ -348,7 +366,83 @@ export default function Home({
   }, [profileModal, profileModalActive])
 
   // comment data 
+  const [comments, setComments] = useState(datas.comments)
+  const [currentCommentPage, setCurrentCommentPage] = useState(1)
+  const [commentPaging, setCommentPaging]:[number[], Function] = useState([1])
+  useEffect(() => {
+    if (comments.page.totalPages > 0) {
+      const totalPages = comments.page.totalPages;
+      let startPage = Math.max(1, currentCommentPage - 3);
+      let endPage = Math.min(totalPages, currentCommentPage + 3);
+  
+      if (currentCommentPage <= 4) {
+        startPage = 1;
+        endPage = Math.min(10, totalPages);
+      } else if (currentCommentPage > totalPages - 6) {
+        startPage = Math.max(totalPages - 9, 1);
+        endPage = totalPages;
+      }
+  
+      const newPaging = [];
+      for (let i = startPage; i <= endPage; i++) {
+        newPaging.push(i);
+      }
+      setCommentPaging(newPaging);
+    }
+  }, [comments, currentCommentPage])
+  const changeCommentPage = useCallback((page:number) => {
+    if(!hydrated) setHydrated(true)
+    console.log(page)
+    setCurrentCommentPage(page)
+  }, [currentCommentPage])
 
+  const commentTitleRef = useRef<HTMLHeadingElement>(null)
+  useEffect(() => {
+    if(!commentTitleRef.current) return
+    getCommentData(currentCommentPage)
+    commentTitleRef.current.scrollIntoView()
+  }, [currentCommentPage])
+  const getCommentData = useCallback(async(page:number) => {
+    try {
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/board/0/document/201/comments/${page}`)
+      if(res.status === 200) {
+        console.log(res.data)
+        setComments(res.data)
+      } else throw new Error('network failed')
+    } catch(err) {
+      console.log(err)
+      setComments(datas.comments)
+    }
+  }, [])
+
+  // reply
+  const initialRepData = useMemo(() => ({
+    module_srl: 0,
+    document_srl: 0,
+    parent_srl: 0,
+    comment_srl: 0,
+    user_name: '',
+    user_id: '',
+    content: '',
+    is_secret: false,
+    voted_count: 0,
+    blamed_count: 0,
+    notify_message: '',
+    password: '',
+    nick_name: '',
+    member_srl: '',
+    email_address: '',
+    homepage: '',
+    uploaded_count: '',
+    last_update: '',
+    regdate: '',
+    ipaddress: '',
+    list_order: '',
+    status: 1,
+  }), [])
+  const [replyData, setReplyData] = useState({
+    
+  })
 
   return (
     <>
@@ -701,13 +795,25 @@ export default function Home({
                   !hydrated ?
                   datas?.likers?.content.map((item:any, idx:number) => (
                     <button title={'아이디: ' + item.liker_id + '이름: ' + item.liker_name + '날짜: ' + item.liker_reg} onClick={() => profileView(item.liker_id)} className={styles.mini_profile_wrapper} key={'likers' + idx}>
-                      <img src={`/images/file/members/${item.liker_id}/mini.jpg`} alt={item.liker_id + 'Profile Photo'} className={styles.mini_profile} />
+                      {/* <img src={`/images/file/members/${item.liker_id}/mini.jpg`} alt={item.liker_id + 'Profile Photo'} className={styles.mini_profile} /> */}
+                      <MiniProfileImage 
+                        src={`/images/file/members/${item.liker_id}/mini.jpg`} 
+                        alt={item.liker_id + 'Profile Photo'} 
+                        className={styles.mini_profile}  
+                      />
                     </button>
                   ))
                   :
                   likers.content.map((item:any, idx:number) => (
                     <button title={'아이디: ' + item.liker_id + '이름: ' + item.liker_name + '날짜: ' + item.liker_reg} onClick={() => profileView(item.liker_id)} className={styles.mini_profile_wrapper} key={'likers' + idx}>
-                      <img src={`/images/file/members/${item.liker_id}/mini.jpg`} alt={item.liker_id + 'Profile Photo'} className={styles.mini_profile} />
+                      
+                        <MiniProfileImage 
+                          src={`/images/file/members/${item.liker_id}/mini.jpg`} 
+                          alt={item.liker_id + 'Profile Photo'} 
+                          className={styles.mini_profile}  
+                        />
+                      
+                      {/* <img src={`/images/file/members/${item.liker_id}/mini.jpg`} alt={item.liker_id + 'Profile Photo'} className={styles.mini_profile} /> */}
                     </button>
                   ))
                 }
@@ -737,7 +843,7 @@ export default function Home({
                 <div id='board_paging'>
                   {likerPaging?.length && likerPaging?.map((page) => (
                     <button
-                      key={'paging' + page}
+                      key={'likerPaging' + page}
                       type='button'
                       className={`paging_btn ${page === currentLikerPage && 'active'}`}
                       aria-label={`paging_btn_${page}`}
@@ -798,9 +904,165 @@ export default function Home({
               <div className={stylesBoard['comment_inner']} id='comment_inner'>
                 <h3 className={stylesBoard['comment_total']}>댓글: <span id='comment_total_num'>3</span></h3>
                 <div className={stylesBoard['comment_list_wrapper']} id='comment_list_wrapper'>
-                  {/* JavaScript 코드가 JSX로 변환되지 않는 부분은 따로 처리해야 합니다 */}
+                  {
+                    datas?.comments?.content?.map((comment:any, idx:number) => (
+                      <div className={stylesBoard['comment_list_wrap']} id='rep_325' key={'comment' + idx}>
+                        <div className={stylesBoard['comment_list']}>
+                          <div className={stylesBoard['comment_photo']}>
+                            
+                              {
+                                comment.user_id &&
+                                <button onClick={() => profileView(comment.user_id)}>
+                                  <MiniProfileImage
+                                    src={`/images/file/members/${comment.user_id}/mini.jpg`} alt='profile image'
+                                  />
+                                </button>
+                              }
+                              {
+                                !comment.user_id &&
+                                <button onClick={() => profileView(undefined, comment.user_name)}>
+                                  <MiniProfileImage
+                                    src='/images/file/members/default-user.png' 
+                                    alt='profile image'
+                                    size={{ width: 48, height: 48 }}
+                                  />
+                                </button>
+                              }
+                            
+                          </div>
+
+                          <div className={stylesBoard['comment_text_wrap']}>
+                            <div className={stylesBoard['comment_name']}>
+                              <a href='#!'><b>[운영자]</b>영이</a>
+                              <p>2022.06.08 16:04</p>
+                            </div>
+                            
+                            <div className={stylesBoard['comment_text']}>자유롭게 댓글을 남겨보세요..!</div>
+                              <div className={stylesBoard['comment_edit']}>
+                                {
+                                  hydrated && <>
+                                  {
+                                  // 로그인 한 댓글
+                                    comment.user_id ? <>
+                                      {
+                                        // 로그인 한 댓글인데, 나도 로그인 했고, 내가 댓글의 주인일 때
+                                        myInfo &&
+                                        (myInfo as string).split('|')[0] === comment.user_id && <p>
+                                        <button className={stylesBoard['onRep']}>수정</button>
+                                        <button className={stylesBoard['onRep']}>삭제</button>
+                                      </p>
+                                      }
+                                    </>
+                                    :
+                                    <>
+                                    {
+                                      // 로그인 안 한 댓글인데, 나도 로그인 안했을 때
+                                      !myInfo && <p>
+                                        <button className={stylesBoard['onRep']}>수정</button>
+                                        <button className={stylesBoard['onRep']}>삭제</button>
+                                      </p>
+                                    }
+                                    </>
+                                  }
+                                </>
+                              }
+                               <p>
+                                <button className={stylesBoard['onRep']}>수정</button>
+                                <button className={stylesBoard['onRep']}>삭제</button>
+                              </p>
+                              <button className={stylesBoard['onRep']}>답글</button>
+                            </div>
+                          </div>
+                        </div>
+                        <div className={stylesBoard['rep-wrap']}>
+                          <form action='/php/comment/INSERT_rep.php' method='post' name='rep_rep_325' className={stylesBoard['comment_form_rep']} id='rep_rep_325'>
+                            <div className={stylesBoard['rep']}>
+                              <img src='/images/icon/arrow-rep.png' alt='arrow' />
+                            </div>
+                            <div className={stylesBoard['comment_form_rep_textarea']}>
+                              <div className={stylesBoard['comment_form_name']}>
+                                <div>
+                                  <input type='text' name='comment_name' placeholder='이름' maxLength={15} />
+                                </div>
+                                <div>
+                                  <input type='password' name='rep_rep_pass' placeholder='비밀번호' maxLength={15} autoComplete='' />
+                                </div>
+                                <input type='hidden' name='document_srl' value='201' readOnly tabIndex={-1} className={stylesBoard['invisible']} />
+                                <input type='hidden' name='module_srl' value='50' readOnly tabIndex={-1} className={stylesBoard['invisible']} />
+                                <input type='hidden' name='parent_srl' value='325' readOnly tabIndex={-1} className={stylesBoard['invisible']} />
+                              </div>
+                              <textarea name='comment_form_txt' className={stylesBoard['comment_form_text']} cols={30} rows={10} placeholder='댓글을 남겨주세요!' required></textarea>
+                              <div className={stylesBoard['comment_btns']}>
+                                <input type='checkbox' className={stylesBoard['check_secret']} name='check_secret' id='check_secret_325' />
+                                <label htmlFor='check_secret_325'>비밀 댓글</label>
+                                <button className={stylesBoard['submit-button']}>작성</button>
+                              </div>
+                            </div>
+                          </form>
+                        </div>
+                    </div>
+                    ))
+                  }
                 </div>
-                <form action='/php/comment/INSERT_comment.php' method='post' name='comment_form' id='comment_form' className={stylesBoard['comment_form']} data-gtm-form-interact-id='0'>
+                <div className='paging'>
+                  <button
+                    type='button'
+                    className='arrow_btn double first'
+                    aria-label='arrow_btn_double_first'
+                    onClick={() => changeCommentPage(1)}
+                  >
+                    <i className='fa fa-angle-double-left'></i>
+                  </button>
+                  <button
+                    type='button'
+                    className='arrow_btn single prev'
+                    aria-label='arrow_btn_single_prev'
+                    onClick={() => {
+                      if(currentCommentPage > 1) {
+                        changeCommentPage(currentCommentPage - 1)
+                      }
+                    }}
+                    id='pageBoardLeft'
+                  >
+                    <i className='fa fa-angle-left'></i>
+                  </button>
+                  <div id='board_paging'>
+                    {commentPaging?.length && commentPaging?.map((page) => (
+                      <button
+                        key={'commentsPaging' + page}
+                        type='button'
+                        className={`paging_btn ${page === currentCommentPage && 'active'}`}
+                        aria-label={`paging_btn_${page}`}
+                        onClick={() => changeCommentPage(page)}
+                      >
+                        <i className='fa'>{page}</i>
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type='button'
+                    className='arrow_btn single next'
+                    aria-label='arrow_btn_single_next'
+                    onClick={() => {
+                      if(currentCommentPage < comments.page.totalPages) {
+                        changeCommentPage(currentCommentPage + 1)
+                      }
+                    }}
+                    id='pageBoardRight'
+                  >
+                    <i className='fa fa-angle-right'></i>
+                  </button>
+                  <button
+                    type='button'
+                    className='arrow_btn double last'
+                    aria-label='arrow_btn_double_last'
+                    onClick={() => changeCommentPage(comments.page.totalPages)}
+                    id='pageBoardRightDouble'
+                  >
+                    <i className='fa fa-angle-double-right'></i>
+                  </button>
+                </div>
+                <form name='comment_form' id='comment_form' className={stylesBoard['comment_form']} data-gtm-form-interact-id='0'>
                   <div id='comment_form_name' className={stylesBoard['comment_form_name']}>
                     <div>
                       <input type='text' name='comment_name' placeholder='이름' maxLength={30} required={true} data-gtm-form-interact-field-id='0' />
@@ -827,3 +1089,26 @@ export default function Home({
   );
 }
 
+export function MiniProfileImage ({ 
+  src, 
+  alt, 
+  size = {
+    width: 60,
+    height: 60
+  } , 
+  className }: {src:string, alt:string, size?: { width: number, height: number} , className?:string}) {
+
+  const [imgSrc, setImgSrc] = useState(src);
+
+  return (
+    <Image
+      src={imgSrc}
+      alt={alt}
+      className={className && className}
+      onError={() => setImgSrc('/images/file/members/default-user.png')}
+      width={size.width}
+      height={size.height}
+      fetchPriority={'low'}
+    />
+  );
+};

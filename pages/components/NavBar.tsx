@@ -4,7 +4,7 @@ import styles from '@/styles/module/NavBar.module.scss'
 // import {useRouter} from 'next/router'
 import { useEffect, useState, useCallback } from 'react';
 import { useRecoilState, useRecoilValue } from 'recoil';
-import { IsAdminAtom, LoadAtom, MyInfoAtom, ScrollBlockAtom } from '@/store/CommonAtom'
+import { IsAdminAtom, LoadAtom, MyInfoAtom, MyTokenAtom, ScrollBlockAtom } from '@/store/CommonAtom'
 import Link from 'next/link'
 
 export default function NavBar() {
@@ -46,6 +46,7 @@ export default function NavBar() {
   }
 
   const [myInfo, setMyInfo] = useRecoilState(MyInfoAtom)
+  const [myToken, setMyToken] = useRecoilState(MyTokenAtom)
   const [isAdmin, setIsAdmin] = useRecoilState(IsAdminAtom)
   // isAdmin, myOnfo를 hydration 없이 csr로 적용
   const [isLogin, setIsLogin] = useState(false)
@@ -54,8 +55,8 @@ export default function NavBar() {
     setStatesAdmin(isAdmin)
   }, [isAdmin])
   useEffect(() => {
-    setIsLogin(!!myInfo)
-  }, [myInfo])
+    setIsLogin(!!myToken)
+  }, [myToken])
 
   /** redux */
   const [scrollBlock, setScrollBlock] = useRecoilState(ScrollBlockAtom);
@@ -89,13 +90,15 @@ export default function NavBar() {
   }, [])
 
   const logout = useCallback(() => {
-    setIsAdmin(null)
+    localStorage.removeItem('myInfo')
+    setIsAdmin(false)
     setMyInfo(null)
+    setMyToken(null)
   }, [myInfo, isAdmin])
 
   return (
     
-      initialLoaded && (
+      initialLoaded ? (
         <>
           <nav className={`${styles['nav']}
           ${navActive && styles['active']}
@@ -201,6 +204,8 @@ export default function NavBar() {
           
         </>
       )
+      :
+      <></>
     
   )
 }

@@ -4,13 +4,14 @@ import { useRouter } from 'next/router';
 import { encryptParam } from '@/utils/common';
 import axios from 'axios';
 import { useRecoilState } from 'recoil';
-import { IsAdminAtom, MyInfoAtom } from '@/store/CommonAtom';
+import { IsAdminAtom, MyInfoAtom, MyTokenAtom } from '@/store/CommonAtom';
 
 export default function Login () {
   const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null);
   const [isAdmin, setIsAdmin] = useRecoilState(IsAdminAtom)
   const [myInfo, setMyInfo] = useRecoilState(MyInfoAtom)
+  const [myToken, setMyToken] = useRecoilState(MyTokenAtom)
 
   const [publicKey] = useState(`-----BEGIN PUBLIC KEY-----
   MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCDAKfF0ZtKtjlNDFaJjBRxE5Pp
@@ -45,17 +46,17 @@ export default function Login () {
       }
       const res = await axios.post(process.env.NEXT_PUBLIC_API_URL + '/api/login', param)
       if(res?.data?.jwt) {
+        localStorage.setItem('myInfo', res?.data?.myInfo)
         localStorage.setItem('accessToken', res?.data?.jwt)
-        localStorage.setItem('isAdmin', res?.data?.isAdmin)
-        console.log(res?.data?.jwt)
-        console.log(atob(res?.data?.isAdmin))
-        setMyInfo(res?.data?.jwt)
+        setMyInfo(res?.data?.myInfo && atob(atob(res?.data?.myInfo)))
+        setMyToken(res?.data?.jwt)
         setIsAdmin(res?.data?.isAdmin === 'true')
         router.push('/')
       }
     } catch(err:any) {
       console.log(err)
       if(err?.response?.data?.message) {
+        localStorage.clear()
         alert(err?.response?.data?.message)
       } else if(err?.code === 500) {
         alert('서버에 문제가 발생 했습니다')

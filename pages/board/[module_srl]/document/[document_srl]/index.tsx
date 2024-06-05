@@ -176,8 +176,6 @@ export const getStaticProps: GetStaticProps<Props> = async (ctx: GetStaticPropsC
       };
     });
 
-    ;
-
     return {
       props: {
         documents: JSON.parse(JSON.stringify(row[0])),

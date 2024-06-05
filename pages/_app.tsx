@@ -37,9 +37,9 @@ const AuthChecker = () => {
     })
     axios.interceptors.response.use((res) => {
       if (res.headers.authorization) {
-        if (!myInfo) return Promise.reject('error')
-        localStorage.setItem('accessToken', res.headers.authorization)
-        setMyInfo(res.headers.authorization)
+        // if (!myInfo) return Promise.reject('error')
+        // localStorage.setItem('accessToken', res.headers.authorization)
+        // setMyInfo(res.headers.authorization)
       }
       return new Promise((resolve) => resolve(res))
     }, (error) => {
