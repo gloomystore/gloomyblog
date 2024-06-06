@@ -158,6 +158,7 @@ export const getServerSideProps = async () => {
         page: {
           currentPage: 1,
           totalPages: totalCommentsPages,
+          totalCount: totalCommentsCount,
         },
       },
     };
@@ -191,6 +192,7 @@ export const getServerSideProps = async () => {
             page: {
               currentPage: 1,
               totalPages: 1,
+              totalCount: 0
             },
           },
         }
@@ -415,8 +417,9 @@ export default function Home({
     }
   }, [])
 
-  // reply
+  // 답글
   const initialRepData = useMemo(() => ({
+    active: false,
     module_srl: 0,
     document_srl: 0,
     parent_srl: 0,
@@ -440,9 +443,77 @@ export default function Home({
     list_order: '',
     status: 1,
   }), [])
-  const [replyData, setReplyData] = useState({
-    
-  })
+  const [replyData, setReplyData] = useState(initialRepData)
+
+  const onSetReplyData = useCallback((module_srl: number, document_srl: number, parent_srl: number) => {
+    // 답글이 열려있는데, 또 누를 경우 닫힘
+    if(replyData.parent_srl === parent_srl) {
+      setReplyData(initialRepData)
+    } else {
+      const data = {
+        ...initialRepData,
+        active: true, 
+        module_srl,
+        document_srl,
+        parent_srl
+      }
+      setReplyData(data)
+    }
+  }, [replyData.parent_srl])
+
+  const [replyId, setReplyId] = useState('')
+  const [replyPw, setReplyPw] = useState('')
+  useEffect(() => {
+    if(myInfo) {
+      setReplyId((myInfo as string).split('|')[0])
+    } else setReplyId('')
+  }, [myInfo])
+
+  const changeReplySecret = useCallback((comment_srl:number, is_secret:boolean) => {
+    const data = {...replyData, parent_srl: comment_srl, is_secret}
+    setReplyData(data)
+  }, [replyData, replyData.active])
+
+  // 댓긒
+  const initialCommentData = useMemo(() => ({
+    active: false,
+    module_srl: 0,
+    document_srl: 0,
+    parent_srl: 0,
+    comment_srl: 0,
+    user_name: '',
+    user_id: '',
+    content: '',
+    is_secret: false,
+    voted_count: 0,
+    blamed_count: 0,
+    notify_message: '',
+    password: '',
+    nick_name: '',
+    member_srl: '',
+    email_address: '',
+    homepage: '',
+    uploaded_count: '',
+    last_update: '',
+    regdate: '',
+    ipaddress: '',
+    list_order: '',
+    status: 1,
+  }), [])
+  const [commentData, setCommentData] = useState(initialCommentData)
+
+  const [commentId, setCommentId] = useState('')
+  const [commentPw, setCommentPw] = useState('')
+  useEffect(() => {
+    if(myInfo) {
+      setCommentId((myInfo as string).split('|')[0])
+    } else setCommentId('')
+  }, [myInfo])
+
+  const changeCommentSecret = useCallback((comment_srl:number, is_secret:boolean) => {
+    const data = {...replyData, parent_srl: comment_srl, is_secret}
+    setReplyData(data)
+  }, [replyData, replyData.active])
 
   return (
     <>
@@ -896,194 +967,258 @@ export default function Home({
             </div>
           </div>
         </div>
-      </section>
-      <section className={styles['section-comment']}>
-        <div className='gallery_wrap gallery_wrap--board' itemScope={true} itemType='https://schema.org/CreativeWork'>
-          <div className={stylesBoard['content_wrap']}>
-            <div className={stylesBoard['comment']} id='comment'>
-              <div className={stylesBoard['comment_inner']} id='comment_inner'>
-                <h3 className={stylesBoard['comment_total']}>댓글: <span id='comment_total_num'>3</span></h3>
-                <div className={stylesBoard['comment_list_wrapper']} id='comment_list_wrapper'>
-                  {
-                    datas?.comments?.content?.map((comment:any, idx:number) => (
-                      <div className={stylesBoard['comment_list_wrap']} id='rep_325' key={'comment' + idx}>
-                        <div className={stylesBoard['comment_list']}>
-                          <div className={stylesBoard['comment_photo']}>
-                            
-                              {
-                                comment.user_id &&
-                                <button onClick={() => profileView(comment.user_id)}>
-                                  <MiniProfileImage
-                                    src={`/images/file/members/${comment.user_id}/mini.jpg`} alt='profile image'
-                                  />
-                                </button>
-                              }
-                              {
-                                !comment.user_id &&
-                                <button onClick={() => profileView(undefined, comment.user_name)}>
-                                  <MiniProfileImage
-                                    src='/images/file/members/default-user.png' 
-                                    alt='profile image'
-                                    size={{ width: 48, height: 48 }}
-                                  />
-                                </button>
-                              }
-                            
-                          </div>
-
-                          <div className={stylesBoard['comment_text_wrap']}>
-                            <div className={stylesBoard['comment_name']}>
-                              <a href='#!'><b>[운영자]</b>영이</a>
-                              <p>2022.06.08 16:04</p>
-                            </div>
-                            
-                            <div className={stylesBoard['comment_text']}>자유롭게 댓글을 남겨보세요..!</div>
-                              <div className={stylesBoard['comment_edit']}>
+        <article className={styles['section-comment']}>
+          <div className='gallery_wrap gallery_wrap--board' itemScope={true} itemType='https://schema.org/CreativeWork'>
+            <div className={`${stylesBoard['content_wrap']} mt-0`}>
+              <div className={stylesBoard['comment']} id='comment'>
+                <div className={stylesBoard['comment_inner']} id='comment_inner'>
+                  <h3 className={stylesBoard['comment_total']}>댓글: <span id='comment_total_num'>{datas?.comments?.page?.totalCount}</span></h3>
+                  <div className={stylesBoard['comment_list_wrapper']} id='comment_list_wrapper'>
+                    {
+                      datas?.comments?.content?.map((comment:any, idx:number) => (
+                        <div className={stylesBoard['comment_list_wrap']} key={'comment' + idx}>
+                          <div className={stylesBoard['comment_list']}>
+                            <div className={stylesBoard['comment_photo']}>
+                              
                                 {
-                                  hydrated && <>
-                                  {
-                                  // 로그인 한 댓글
-                                    comment.user_id ? <>
-                                      {
-                                        // 로그인 한 댓글인데, 나도 로그인 했고, 내가 댓글의 주인일 때
-                                        myInfo &&
-                                        (myInfo as string).split('|')[0] === comment.user_id && <p>
-                                        <button className={stylesBoard['onRep']}>수정</button>
-                                        <button className={stylesBoard['onRep']}>삭제</button>
-                                      </p>
-                                      }
-                                    </>
-                                    :
-                                    <>
+                                  comment.user_id &&
+                                  <button onClick={() => profileView(comment.user_id)}>
+                                    <MiniProfileImage
+                                      src={`/images/file/members/${comment.user_id}/mini.jpg`} 
+                                      alt='profile image'
+                                      size={{ width: 48, height: 48 }}
+                                    />
+                                  </button>
+                                }
+                                {
+                                  !comment.user_id &&
+                                  <button onClick={() => profileView(undefined, comment.user_name)}>
+                                    <MiniProfileImage
+                                      src='/images/file/members/default-user.png' 
+                                      alt='profile image'
+                                      size={{ width: 48, height: 48 }}
+                                    />
+                                  </button>
+                                }
+                              
+                            </div>
+
+                            <div className={stylesBoard['comment_text_wrap']}>
+                              <div className={stylesBoard['comment_name']}>
+                                <a href='#!'>
+                                  <span>
                                     {
-                                      // 로그인 안 한 댓글인데, 나도 로그인 안했을 때
-                                      !myInfo && <p>
-                                        <button className={stylesBoard['onRep']}>수정</button>
-                                        <button className={stylesBoard['onRep']}>삭제</button>
-                                      </p>
+                                      comment.user_id === 'uptownboy7' && <b className='black t-purple'>[운영자] </b>
+                                    }  
+                                  </span>
+                                  {comment.user_name}
+                                </a>
+                                <p>2022.06.08 16:04</p>
+                              </div>
+                              
+                              <div className={stylesBoard['comment_text']}>{comment.content}</div>
+                                <div className={stylesBoard['comment_edit']}>
+                                  {
+                                    load && <>
+                                    {
+                                    // 로그인 한 댓글
+                                      comment.user_id ? <>
+                                        {
+                                          // 로그인 한 댓글인데, 나도 로그인 했고, 내가 댓글의 주인일 때
+                                          myInfo &&
+                                          (myInfo as string).split('|')[0] === comment.user_id && <p>
+                                          <button className={stylesBoard['onRep']}>수정</button>
+                                          <span> / </span>
+                                          <button className={stylesBoard['onRep']}>삭제</button>
+                                        </p>
+                                        }
+                                      </>
+                                      :
+                                      <>
+                                      {
+                                        // 로그인 안 한 댓글인데, 나도 로그인 안했을 때
+                                        !myInfo && <p>
+                                          <button className={stylesBoard['onRep']}>수정</button>
+                                          <span> / </span>
+                                          <button className={stylesBoard['onRep']}>삭제</button>
+                                        </p>
+                                      }
+                                      </>
                                     }
-                                    </>
-                                  }
-                                </>
-                              }
-                               <p>
-                                <button className={stylesBoard['onRep']}>수정</button>
-                                <button className={stylesBoard['onRep']}>삭제</button>
-                              </p>
-                              <button className={stylesBoard['onRep']}>답글</button>
+                                  </>
+                                }
+                                {/* <p>
+                                  <button className={stylesBoard['onRep']}>수정</button>
+                                  <span> / </span>
+                                  <button className={stylesBoard['onRep']}>삭제</button>
+                                </p>
+                                <button className={stylesBoard['onRep']}>답글</button> */}
+                                <button 
+                                  className={stylesBoard['onRep']}
+                                  onClick={() => onSetReplyData(comment.module_srl, comment.document_srl, comment.comment_srl)}  
+                                >
+                                  답글
+                                </button>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div className={stylesBoard['rep-wrap']}>
-                          <form action='/php/comment/INSERT_rep.php' method='post' name='rep_rep_325' className={stylesBoard['comment_form_rep']} id='rep_rep_325'>
-                            <div className={stylesBoard['rep']}>
-                              <img src='/images/icon/arrow-rep.png' alt='arrow' />
-                            </div>
-                            <div className={stylesBoard['comment_form_rep_textarea']}>
-                              <div className={stylesBoard['comment_form_name']}>
-                                <div>
-                                  <input type='text' name='comment_name' placeholder='이름' maxLength={15} />
+                          {
+                          // 답글 달기가 활성화 상태라면
+                          replyData.active && replyData.parent_srl === comment.comment_srl &&
+                            <div className={stylesBoard['rep-wrap']}>
+                              <form className={stylesBoard['comment_form_rep']}>
+                                <div className={stylesBoard['rep']}>
+                                  <img src='/images/icon/arrow-rep.png' alt='arrow' />
                                 </div>
-                                <div>
-                                  <input type='password' name='rep_rep_pass' placeholder='비밀번호' maxLength={15} autoComplete='' />
+                                <div className={stylesBoard['comment_form_rep_textarea']}>
+                                  <div className={stylesBoard['comment_form_name']}>
+                                    <div>
+                                      <input 
+                                        type='text' 
+                                        name='comment_name' placeholder='이름' 
+                                        maxLength={15}
+                                        disabled={!!myInfo} 
+                                        value={replyId}
+                                        onChange={(e) => setReplyId(e.currentTarget.value)}
+                                      />
+                                    </div>
+                                    <div>
+                                      <input 
+                                        type='password' name='rep_rep_pass' placeholder='비밀번호' 
+                                        maxLength={15} 
+                                        autoComplete='off' 
+                                        value={replyPw}
+                                        disabled={!!myInfo}
+                                        onChange={(e) => setReplyPw(e.currentTarget.value)}
+                                      />
+                                    </div>
+                                    <input type='hidden' name='document_srl' value='201' readOnly tabIndex={-1} className={stylesBoard['invisible']} />
+                                    <input type='hidden' name='module_srl' value='50' readOnly tabIndex={-1} className={stylesBoard['invisible']} />
+                                    <input type='hidden' name='parent_srl' value='325' readOnly tabIndex={-1} className={stylesBoard['invisible']} />
+                                  </div>
+                                  <textarea name='comment_form_txt' className={stylesBoard['comment_form_text']} cols={30} rows={10} placeholder='댓글을 남겨주세요!' required></textarea>
+                                  <div className={stylesBoard['comment_btns']}>
+                                    <input 
+                                      type='checkbox' 
+                                      className={stylesBoard['check_secret']} 
+                                      id={'check_secret_' + idx} 
+                                      onChange={(e) => changeReplySecret(comment.comment_srl, e.currentTarget.checked)}  
+                                    />
+                                    <label htmlFor={'check_secret_' + idx}>
+                                      비밀 댓글
+                                    </label>
+                                    <button className={stylesBoard['submit-button']}>작성</button>
+                                  </div>
                                 </div>
-                                <input type='hidden' name='document_srl' value='201' readOnly tabIndex={-1} className={stylesBoard['invisible']} />
-                                <input type='hidden' name='module_srl' value='50' readOnly tabIndex={-1} className={stylesBoard['invisible']} />
-                                <input type='hidden' name='parent_srl' value='325' readOnly tabIndex={-1} className={stylesBoard['invisible']} />
-                              </div>
-                              <textarea name='comment_form_txt' className={stylesBoard['comment_form_text']} cols={30} rows={10} placeholder='댓글을 남겨주세요!' required></textarea>
-                              <div className={stylesBoard['comment_btns']}>
-                                <input type='checkbox' className={stylesBoard['check_secret']} name='check_secret' id='check_secret_325' />
-                                <label htmlFor='check_secret_325'>비밀 댓글</label>
-                                <button className={stylesBoard['submit-button']}>작성</button>
-                              </div>
+                              </form>
                             </div>
-                          </form>
+                          }
+                      </div>
+                      ))
+                    }
+                  </div>
+                  <div className='paging'>
+                    <button
+                      type='button'
+                      className='arrow_btn double first'
+                      aria-label='arrow_btn_double_first'
+                      onClick={() => changeCommentPage(1)}
+                    >
+                      <i className='fa fa-angle-double-left'></i>
+                    </button>
+                    <button
+                      type='button'
+                      className='arrow_btn single prev'
+                      aria-label='arrow_btn_single_prev'
+                      onClick={() => {
+                        if(currentCommentPage > 1) {
+                          changeCommentPage(currentCommentPage - 1)
+                        }
+                      }}
+                      id='pageBoardLeft'
+                    >
+                      <i className='fa fa-angle-left'></i>
+                    </button>
+                    <div id='board_paging'>
+                      {commentPaging?.length && commentPaging?.map((page) => (
+                        <button
+                          key={'commentsPaging' + page}
+                          type='button'
+                          className={`paging_btn ${page === currentCommentPage && 'active'}`}
+                          aria-label={`paging_btn_${page}`}
+                          onClick={() => changeCommentPage(page)}
+                        >
+                          <i className='fa'>{page}</i>
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      type='button'
+                      className='arrow_btn single next'
+                      aria-label='arrow_btn_single_next'
+                      onClick={() => {
+                        if(currentCommentPage < comments.page.totalPages) {
+                          changeCommentPage(currentCommentPage + 1)
+                        }
+                      }}
+                      id='pageBoardRight'
+                    >
+                      <i className='fa fa-angle-right'></i>
+                    </button>
+                    <button
+                      type='button'
+                      className='arrow_btn double last'
+                      aria-label='arrow_btn_double_last'
+                      onClick={() => changeCommentPage(comments.page.totalPages)}
+                      id='pageBoardRightDouble'
+                    >
+                      <i className='fa fa-angle-double-right'></i>
+                    </button>
+                  </div>
+                  <form name='comment_form' id='comment_form' className={stylesBoard['comment_form']} data-gtm-form-interact-id='0'>
+                    {
+                      load && <div className={stylesBoard['comment_form_rep_textarea']}>
+                      <div id='comment_form_name' className={stylesBoard['comment_form_name']}>
+                        <div>
+                          <input 
+                            type='text' 
+                            name='comment_name' 
+                            placeholder='이름' 
+                            maxLength={30} 
+                            required={true} data-gtm-form-interact-field-id='0'
+                            disabled={!!myInfo} 
+                            value={commentId}
+                            onChange={(e) => setCommentId(e.currentTarget.value)}
+                          />
                         </div>
+                        <div>
+                          <input 
+                            type='password' 
+                            name='comment_pass' 
+                            placeholder='비밀번호' 
+                            maxLength={15} required={true} autoComplete='on' data-gtm-form-interact-field-id='1' 
+                            disabled={!!myInfo} 
+                            value={commentPw}
+                            onChange={(e) => setCommentPw(e.currentTarget.value)}
+                          />
+                        </div>
+                        {/* 스팸 방지문구 영역은 주석 처리합니다 */}
+                        <input type='hidden' name='document_srl' value='1027' readOnly={true} tabIndex={-1} className={stylesBoard['invisible']} />
+                        <input type='hidden' name='module_srl' value='52' readOnly={true} tabIndex={-1} className={stylesBoard['invisible']} />
+                      </div>
+                      <textarea name='comment_form_text' id='comment_form_text2' className={stylesBoard['comment_form_text']} cols={30} rows={10} placeholder='댓글을 남겨주세요!' required={true}></textarea>
+                      <div className={stylesBoard['comment_btns']}>
+                        <input type='checkbox' className={stylesBoard['check_secret']} name='check_secret' id='check_secret' /><label htmlFor='check_secret'>비밀 댓글</label>
+                        <button type='submit' className={stylesBoard['submit-button']}>작성</button>
+                      </div>
                     </div>
-                    ))
-                  }
+                    }
+                  </form>
                 </div>
-                <div className='paging'>
-                  <button
-                    type='button'
-                    className='arrow_btn double first'
-                    aria-label='arrow_btn_double_first'
-                    onClick={() => changeCommentPage(1)}
-                  >
-                    <i className='fa fa-angle-double-left'></i>
-                  </button>
-                  <button
-                    type='button'
-                    className='arrow_btn single prev'
-                    aria-label='arrow_btn_single_prev'
-                    onClick={() => {
-                      if(currentCommentPage > 1) {
-                        changeCommentPage(currentCommentPage - 1)
-                      }
-                    }}
-                    id='pageBoardLeft'
-                  >
-                    <i className='fa fa-angle-left'></i>
-                  </button>
-                  <div id='board_paging'>
-                    {commentPaging?.length && commentPaging?.map((page) => (
-                      <button
-                        key={'commentsPaging' + page}
-                        type='button'
-                        className={`paging_btn ${page === currentCommentPage && 'active'}`}
-                        aria-label={`paging_btn_${page}`}
-                        onClick={() => changeCommentPage(page)}
-                      >
-                        <i className='fa'>{page}</i>
-                      </button>
-                    ))}
-                  </div>
-                  <button
-                    type='button'
-                    className='arrow_btn single next'
-                    aria-label='arrow_btn_single_next'
-                    onClick={() => {
-                      if(currentCommentPage < comments.page.totalPages) {
-                        changeCommentPage(currentCommentPage + 1)
-                      }
-                    }}
-                    id='pageBoardRight'
-                  >
-                    <i className='fa fa-angle-right'></i>
-                  </button>
-                  <button
-                    type='button'
-                    className='arrow_btn double last'
-                    aria-label='arrow_btn_double_last'
-                    onClick={() => changeCommentPage(comments.page.totalPages)}
-                    id='pageBoardRightDouble'
-                  >
-                    <i className='fa fa-angle-double-right'></i>
-                  </button>
-                </div>
-                <form name='comment_form' id='comment_form' className={stylesBoard['comment_form']} data-gtm-form-interact-id='0'>
-                  <div id='comment_form_name' className={stylesBoard['comment_form_name']}>
-                    <div>
-                      <input type='text' name='comment_name' placeholder='이름' maxLength={30} required={true} data-gtm-form-interact-field-id='0' />
-                    </div>
-                    <div>
-                      <input type='password' name='comment_pass' placeholder='비밀번호' maxLength={15} required={true} autoComplete='on' data-gtm-form-interact-field-id='1' />
-                    </div>
-                    {/* 스팸 방지문구 영역은 주석 처리합니다 */}
-                    <input type='hidden' name='document_srl' value='1027' readOnly={true} tabIndex={-1} className={stylesBoard['invisible']} />
-                    <input type='hidden' name='module_srl' value='52' readOnly={true} tabIndex={-1} className={stylesBoard['invisible']} />
-                  </div>
-                  <textarea name='comment_form_txt' id='comment_form_txt' className={stylesBoard['comment_form_txt']} cols={30} rows={10} placeholder='댓글을 남겨주세요!' required={true}></textarea>
-                  <div className={stylesBoard['comment_btns']}>
-                    <input type='checkbox' className={stylesBoard['check_secret']} name='check_secret' id='check_secret' /><label htmlFor='check_secret'>비밀 댓글</label>
-                    <button type='submit'>작성</button>
-                  </div>
-                </form>
               </div>
             </div>
           </div>
-        </div>
+        </article>
       </section>
     </>
   );

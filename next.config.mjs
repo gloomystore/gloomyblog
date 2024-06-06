@@ -6,7 +6,7 @@ const nextConfig = {
         exclude: ['error', 'warn'],
       },
     },
-  }),/*
+  }),
   async headers() {
     return [
       {
@@ -14,14 +14,12 @@ const nextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: process.env.NODE_ENV === 'development'
-              ? "default-src 'self' 'unsafe-eval' https://*.gloomy-store.com; img-src 'self' https://*.gloomy-store.com; style-src 'self' 'unsafe-inline';"
-              : "default-src 'self' https://*.gloomy-store.com; img-src 'self' https://*.gloomy-store.com; style-src 'self' 'unsafe-inline';",
+            value: "default-src 'self' https://blog.gloomy-store.com; script-src 'self' 'unsafe-eval' https://blog.gloomy-store.com; style-src 'self' 'unsafe-inline' https://blog.gloomy-store.com;",
           },
         ],
       },
     ];
-  },*/
+  },
 };
 
 export default nextConfig;

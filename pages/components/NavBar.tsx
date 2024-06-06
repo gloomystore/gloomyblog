@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRecoilState, useRecoilValue } from 'recoil';
 import { IsAdminAtom, LoadAtom, MyInfoAtom, MyTokenAtom, ScrollBlockAtom } from '@/store/CommonAtom'
 import Link from 'next/link'
+import { useRouter } from 'next/router';
 
 export default function NavBar() {
   // const router = useRouter()
@@ -63,6 +64,12 @@ export default function NavBar() {
   const [load, setLoad] = useRecoilState(LoadAtom);
   const [scrollStyle,setScrollStyle] = useState(` `)
 
+  // 페이지가 변경되면 모바일 nav메뉴가 닫힘
+  const router = useRouter()
+  useEffect(() => {
+    setNavActive(false)
+    setScrollStyle(``)
+  }, [router.pathname])
   useEffect(() => {
     if(!initialLoaded) return
     setScrollBlock(navActive)
@@ -94,6 +101,9 @@ export default function NavBar() {
     setIsAdmin(false)
     setMyInfo(null)
     setMyToken(null)
+
+    // nav 닫기
+    setNavActive(false)
   }, [myInfo, isAdmin])
 
   return (
@@ -185,6 +195,7 @@ export default function NavBar() {
                     <div className={styles['submenu']}>
                       <Link href=':'>회원정보 변경</Link>
                       <Link href=':'>쪽지함</Link>
+                      <button onClick={logout}>로그아웃</button>
                       {
                         stateIsAdmin && <Link href=':'>글쓰기</Link>
                       }

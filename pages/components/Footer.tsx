@@ -5,6 +5,7 @@ import { Visitor, Visitor2 } from '@/type/index';
 import { getDates } from '@/utils/common';
 import axios from 'axios';
 import API from '@/api/index'
+import { useRouter } from 'next/router';
 
 export default function Footer({statistics}:any) {
   const [isLoadIp, setIsLoadIp] = useState(false)
@@ -57,8 +58,14 @@ export default function Footer({statistics}:any) {
     updateVisitor()
   }, [isLoadIp])
 
+  const router = useRouter()
+  const [isMain, setIsMain] = useState(router.pathname === '/')
+  useEffect(() => {
+    setIsMain(router.pathname === '/')
+  }, [router.pathname])
+
   return (
-    <footer className={`${styles["footer"]}`} id="contact">
+    <footer className={`${styles["footer"]} ${isMain && 'mt-0'}`} id="contact">
     <div className={`${styles["footer-inner"]}`}>
       <article className={`${styles["footer-logo"]}`}>
         <Link className="img-box" href="/">

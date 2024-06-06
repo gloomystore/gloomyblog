@@ -36,6 +36,9 @@ body {
   position: relative;
   z-index: -2;
 }
+input, textarea {
+  font-family: 'NotoSansKR';
+}
 
 main {
   min-height: calc(100vh - 480px);

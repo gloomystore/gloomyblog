@@ -1,4 +1,4 @@
-import { RecoilRoot, atom } from 'recoil';
+import { RecoilRoot, RecoilState, atom } from 'recoil';
 
 // 로컬 스토리지에서 값을 가져오는 함수
 const getDefaultValueFromLocalStorage = (key: string, defaultValue: any) => {
@@ -60,16 +60,13 @@ export const IsAdminAtom = atom({
   // ]
 })
 
-export const MyInfoAtom = atom({
+export const MyInfoAtom: RecoilState<string | null> = atom<string | null>({
   key: 'MyInfoAtom',
-  default: null,
-})
+  default: getDefaultValueFromLocalStorage('myInfo', null),
+});
 export const MyTokenAtom = atom({
   key: 'MyTokenAtom',
   default: getDefaultValueFromLocalStorage('accessToken', null),
-  effects: [
-    localStorageEffect('accessToken'),
-  ]
 })
 export {ProfileModalAtom, ProfileModalActiveAtom} from './ModalAtom'
 

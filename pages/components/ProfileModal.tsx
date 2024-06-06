@@ -34,7 +34,7 @@ export default function ProfileModal() {
       <div className='modal-content modal-profile'>
         <div className='photo-zone'>
           <button>
-            <img src={`/images/file/members/${profileModal?.BOR_mem_id ? profileModal?.BOR_mem_id : 'uptownboy7'}/profile.jpg`} alt={profileModal.BOR_mem_name} />
+            <img src={profileModal?.BOR_mem_id ? `/images/file/members/${profileModal?.BOR_mem_id}/profile.jpg` : `/images/file/members/default-user.png`} alt={profileModal.BOR_mem_name} />
           </button>
         </div>
         <div className='script-zone'>

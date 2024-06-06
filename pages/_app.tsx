@@ -1,6 +1,6 @@
 import "@/styles/globals.scss";
 import type { AppProps } from "next/app";
-import RecoidContextProvider from "@/store/CommonAtom";
+import RecoidContextProvider, { LoadAtom, MyTokenAtom } from "@/store/CommonAtom";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 
@@ -27,6 +27,23 @@ const AuthChecker = () => {
   const [isHeaderInfoAttached, setIsHeaderInfoAttached] = useState(false)
   const [isAdmin, setIsAdmin] = useRecoilState(IsAdminAtom)
   const [myInfo, setMyInfo] = useRecoilState(MyInfoAtom)
+  const [myToken, setMyToken] = useRecoilState(MyTokenAtom)
+  const [load, setLoad] = useRecoilState(LoadAtom)
+  useEffect(() => {
+    try {
+      if (localStorage.getItem('accessToken') && localStorage.getItem('myInfo')) {
+        const infoString = localStorage.getItem('myInfo')
+        const info = atob(atob((infoString as string)))
+        setMyInfo(info)
+        setMyToken(localStorage.getItem('accessToken'))
+      } else {
+        setMyInfo(null)
+        setMyToken(null)
+      }
+    } catch (err) {
+
+    }
+  }, [])
   const setClientHeaders = useCallback(() => {
     axios.interceptors.request.use((req) => {
       const token = localStorage?.getItem('accessToken')
@@ -60,6 +77,7 @@ const AuthChecker = () => {
           setIsAdmin(false)
           setMyInfo(null)
           localStorage.removeItem('isAdmin')
+          localStorage.removeItem('myInfo')
           localStorage.removeItem('accessToken')
           router.push('/')
         }
@@ -71,6 +89,7 @@ const AuthChecker = () => {
   
   useEffect(() => {
     setClientHeaders()
+    setLoad(true)
   }, []);
 
   return null;

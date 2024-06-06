@@ -56,6 +56,9 @@
           display: inline-block;
           font-size: 26px;
           font-weight: 700;
+          @media (max-width: 600px) {
+            font-size: 17px;
+          }
         }
         input {
           @media (max-width: 600px) {
