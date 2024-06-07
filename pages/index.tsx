@@ -46,7 +46,6 @@ export const getServerSideProps = async () => {
       uploaded_count,
       user_id,
       user_name,
-      nick_name,
       voted_count
       FROM xe_documents
       WHERE module_srl IN (214, 52)
@@ -120,7 +119,6 @@ export const getServerSideProps = async () => {
       password: comment.password,
       user_id: comment.user_id,
       user_name: comment.user_name,
-      nick_name: comment.nick_name,
       member_srl: comment.member_srl,
       email_address: comment.email_address,
       homepage: comment.homepage,
@@ -461,7 +459,6 @@ export default function Home({
     blamed_count: 0,
     notify_message: '',
     password: '',
-    nick_name: '',
     member_srl: '',
     email_address: '',
     homepage: '',
@@ -518,7 +515,6 @@ export default function Home({
     blamed_count: 0,
     notify_message: '',
     password: '',
-    nick_name: '',
     member_srl: '',
     email_address: '',
     homepage: '',
@@ -541,7 +537,7 @@ export default function Home({
   const [commentPw, setCommentPw] = useState('')
   useEffect(() => {
     const data = {...commentData}
-    data.nick_name = commentId
+    data.user_name = commentId
     data.password = commentPw
     setCommentData(data)
   }, [commentId, commentPw])
@@ -1051,7 +1047,7 @@ export default function Home({
                                 }
                                 {
                                   !comment.user_id &&
-                                  <button type='button' onClick={() => profileView(undefined, comment.nick_name)}>
+                                  <button type='button' onClick={() => profileView(undefined, comment.user_name)}>
                                     <MiniProfileImage
                                       user_id='/images/file/members/default-user.png' 
                                       alt='profile image'
@@ -1070,7 +1066,7 @@ export default function Home({
                                       comment.user_id === 'uptownboy7' && <b className='black t-purple'>[운영자] </b>
                                     }  
                                   </span>
-                                  {comment.nick_name}
+                                  {comment.user_name}
                                 </a>
                                 <p>2022.06.08 16:04</p>
                               </div>

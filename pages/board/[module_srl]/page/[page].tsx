@@ -50,7 +50,6 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
         uploaded_count,
         user_id,
         user_name,
-        nick_name,
         voted_count
       FROM xe_documents
       WHERE module_srl = ?
