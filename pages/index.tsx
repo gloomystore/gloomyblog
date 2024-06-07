@@ -16,6 +16,7 @@ import { RowDataPacket } from 'mysql2';
 import Link from 'next/link';
 import { strip_tags } from '@/utils/common';
 import Image from 'next/image';
+import API from './api';
 
 export const getServerSideProps = async () => {
   try {
@@ -73,7 +74,7 @@ export const getServerSideProps = async () => {
 
     // youngetable에서 likers 데이터를 가져옵니다.
     const [likersRows] = await pool.query<RowDataPacket[]>(`
-      SELECT liker_id, liker_name, liker_like, liker_reg, liker_reg2
+      SELECT liker_id, liker_name, liker_like, liker_reg
       FROM youngetable
       ORDER BY liker_reg DESC
       LIMIT ${likersPageSize} OFFSET ${offset}
@@ -84,7 +85,6 @@ export const getServerSideProps = async () => {
       liker_name: liker.liker_name,
       liker_like: liker.liker_like,
       liker_reg: liker.liker_reg,
-      liker_reg2: liker.liker_reg2,
     }));
 
     // 총 likers 수를 계산합니다.
@@ -317,8 +317,7 @@ export default function Home({
   }, [likers, currentLikerPage])
   const changeLikerPage = useCallback((page:number) => {
     if(!hydrated) setHydrated(true)
-    setLikerRandomKey(Math.random() * 10 / 5)
-    console.log(page)
+    setLikerRandomKey(Math.random())
     setCurrentLikerPage(page)
   }, [likerRandomKey, currentLikerPage])
 
@@ -327,18 +326,48 @@ export default function Home({
     if(!likerTitleRef.current) return
     getLikerData(currentLikerPage)
     likerTitleRef.current.scrollIntoView()
-  }, [currentLikerPage])
-  const getLikerData = useCallback(async(page:number) => {
+  }, [likerRandomKey, currentLikerPage])
+  const getLikerData = useCallback(async(page?:number) => {
     try {
+      if(!page) page = 1
       const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/liker/${page}`)
       if(res.status === 200) {
+        console.log(res.data.content[0])
         setLikers(res.data)
       } else throw new Error('network failed')
     } catch(err) {
       console.log(err)
       setDocument(datas.likers)
     }
-  }, [])
+  }, [likerRandomKey])
+
+  const onLikeButton = useCallback(async() => {
+    if(!myInfo) return alert('로그인 한 유저만 가능합니다')
+    try {
+      const idData = {
+        id: (myInfo as string).split('|')[0]
+      }
+      // 내 아이디에 대한 종합정보 가져오기
+      const profileRes = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/common/getProfile`, idData)
+      const { data } = profileRes
+      // 좋아요 누르기
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/liker/push`, {
+        liker_id: data.BOR_mem_id,
+        liker_name: data.BOR_mem_name,
+      })
+      if(res.data.liker_like === 1) {
+        alert('좋아요를 눌렀습니다')
+      } else if(res.data.liker_like === 0) {
+        alert('좋아요를 취소했습니다')
+      }
+      changeLikerPage(1)
+  } catch(err:any) {
+    console.log(err)
+    if(err?.response?.data?.message) {
+      alert(err?.response?.data?.message)
+    }
+  }
+  }, [myInfo])
 
   // modal
   const [profileModal, setProfileModal] = useRecoilState(ProfileModalAtom)
@@ -358,7 +387,6 @@ export default function Home({
       const data = { id }
       const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/common/getProfile`, data)
       if(res.status === 200) {
-        console.log(res.data)
         setProfileModal(res.data)
         setProfileModalActive(true)
       }
@@ -855,7 +883,7 @@ export default function Home({
           <div>
             <div className={styles['section-liker__title']}>
               <h2 className={`${styles['title-02']} ${styles.deco}`} itemProp='title' ref={likerTitleRef}>
-                <button>
+                <button type='button'>
                   이 블로그를 <br className='onlySP' /><span>좋아하는</span> 사람들
                 </button>
               </h2>
@@ -865,26 +893,25 @@ export default function Home({
                 {
                   !hydrated ?
                   datas?.likers?.content.map((item:any, idx:number) => (
-                    <button title={'아이디: ' + item.liker_id + '이름: ' + item.liker_name + '날짜: ' + item.liker_reg} onClick={() => profileView(item.liker_id)} className={styles.mini_profile_wrapper} key={'likers' + idx}>
-                      {/* <img src={`/images/file/members/${item.liker_id}/mini.jpg`} alt={item.liker_id + 'Profile Photo'} className={styles.mini_profile} /> */}
+                    <button type='button' title={'아이디: ' + item.liker_id + '이름: ' + item.liker_name + '날짜: ' + item.liker_reg} onClick={() => profileView(item.liker_id)} className={styles.mini_profile_wrapper} key={'likers' + idx}>
+                      {/* <img src={item.liker_id} alt={item.liker_id + 'Profile Photo'} className={styles.mini_profile} /> */}
                       <MiniProfileImage 
-                        src={`/images/file/members/${item.liker_id}/mini.jpg`} 
+                        user_id={item.liker_id} 
                         alt={item.liker_id + 'Profile Photo'} 
                         className={styles.mini_profile}  
                       />
                     </button>
                   ))
                   :
-                  likers.content.map((item:any, idx:number) => (
-                    <button title={'아이디: ' + item.liker_id + '이름: ' + item.liker_name + '날짜: ' + item.liker_reg} onClick={() => profileView(item.liker_id)} className={styles.mini_profile_wrapper} key={'likers' + idx}>
-                      
+                  likers?.content?.map((item:any, idx:number) => (
+                    <button type='button' title={'아이디: ' + item.liker_id + '이름: ' + item.liker_name + '날짜: ' + item.liker_reg} onClick={() => profileView(item.liker_id)} className={styles.mini_profile_wrapper} key={'likers' + idx}>
                         <MiniProfileImage 
-                          src={`/images/file/members/${item.liker_id}/mini.jpg`} 
+                          user_id={item.liker_id} 
                           alt={item.liker_id + 'Profile Photo'} 
                           className={styles.mini_profile}  
                         />
                       
-                      {/* <img src={`/images/file/members/${item.liker_id}/mini.jpg`} alt={item.liker_id + 'Profile Photo'} className={styles.mini_profile} /> */}
+                      {/* <img src={item.liker_id} alt={item.liker_id + 'Profile Photo'} className={styles.mini_profile} /> */}
                     </button>
                   ))
                 }
@@ -948,7 +975,7 @@ export default function Home({
                 </button>
               </div>
               <article className={styles['like_btns']}>
-                <button className={styles['like_btn']} id='like_btn' type='submit'>
+                <button className={styles['like_btn']} id='like_btn' type='button' onClick={onLikeButton}>
                   <img src='/images/icon/figma.png' alt='figma' />
                 </button>
                 <p>
@@ -982,9 +1009,9 @@ export default function Home({
                               
                                 {
                                   comment.user_id &&
-                                  <button onClick={() => profileView(comment.user_id)}>
+                                  <button type='button' onClick={() => profileView(comment.user_id)}>
                                     <MiniProfileImage
-                                      src={`/images/file/members/${comment.user_id}/mini.jpg`} 
+                                      user_id={comment.user_id} 
                                       alt='profile image'
                                       size={{ width: 48, height: 48 }}
                                     />
@@ -992,9 +1019,9 @@ export default function Home({
                                 }
                                 {
                                   !comment.user_id &&
-                                  <button onClick={() => profileView(undefined, comment.user_name)}>
+                                  <button type='button' onClick={() => profileView(undefined, comment.user_name)}>
                                     <MiniProfileImage
-                                      src='/images/file/members/default-user.png' 
+                                      user_id='/images/file/members/default-user.png' 
                                       alt='profile image'
                                       size={{ width: 48, height: 48 }}
                                     />
@@ -1027,9 +1054,9 @@ export default function Home({
                                           // 로그인 한 댓글인데, 나도 로그인 했고, 내가 댓글의 주인일 때
                                           myInfo &&
                                           (myInfo as string).split('|')[0] === comment.user_id && <p>
-                                          <button className={stylesBoard['onRep']}>수정</button>
+                                          <button type='button' className={stylesBoard['onRep']}>수정</button>
                                           <span> / </span>
-                                          <button className={stylesBoard['onRep']}>삭제</button>
+                                          <button type='button' className={stylesBoard['onRep']}>삭제</button>
                                         </p>
                                         }
                                       </>
@@ -1038,9 +1065,9 @@ export default function Home({
                                       {
                                         // 로그인 안 한 댓글인데, 나도 로그인 안했을 때
                                         !myInfo && <p>
-                                          <button className={stylesBoard['onRep']}>수정</button>
+                                          <button type='button' className={stylesBoard['onRep']}>수정</button>
                                           <span> / </span>
-                                          <button className={stylesBoard['onRep']}>삭제</button>
+                                          <button type='button' className={stylesBoard['onRep']}>삭제</button>
                                         </p>
                                       }
                                       </>
@@ -1054,6 +1081,7 @@ export default function Home({
                                 </p>
                                 <button className={stylesBoard['onRep']}>답글</button> */}
                                 <button 
+                                  type='button'
                                   className={stylesBoard['onRep']}
                                   onClick={() => onSetReplyData(comment.module_srl, comment.document_srl, comment.comment_srl)}  
                                 >
@@ -1107,7 +1135,7 @@ export default function Home({
                                     <label htmlFor={'check_secret_' + idx}>
                                       비밀 댓글
                                     </label>
-                                    <button className={stylesBoard['submit-button']}>작성</button>
+                                    <button type='button' className={stylesBoard['submit-button']}>작성</button>
                                   </div>
                                 </div>
                               </form>
@@ -1209,7 +1237,7 @@ export default function Home({
                       <textarea name='comment_form_text' id='comment_form_text2' className={stylesBoard['comment_form_text']} cols={30} rows={10} placeholder='댓글을 남겨주세요!' required={true}></textarea>
                       <div className={stylesBoard['comment_btns']}>
                         <input type='checkbox' className={stylesBoard['check_secret']} name='check_secret' id='check_secret' /><label htmlFor='check_secret'>비밀 댓글</label>
-                        <button type='submit' className={stylesBoard['submit-button']}>작성</button>
+                        <button type='button' className={stylesBoard['submit-button']}>작성</button>
                       </div>
                     </div>
                     }
@@ -1225,22 +1253,26 @@ export default function Home({
 }
 
 export function MiniProfileImage ({ 
-  src, 
+  user_id, 
   alt, 
   size = {
     width: 60,
     height: 60
   } , 
-  className }: {src:string, alt:string, size?: { width: number, height: number} , className?:string}) {
+  className }: {user_id:string, alt:string, size?: { width: number, height: number} , className?:string}) {
 
-  const [imgSrc, setImgSrc] = useState(src);
+  const [imgSrc, setImgSrc] = useState(`/images/file/members/${user_id}/mini.webp`);
+
+  useEffect(() => {
+    setImgSrc(`/images/file/members/${user_id}/mini.webp`)
+  }, [user_id])
 
   return (
     <Image
       src={imgSrc}
       alt={alt}
       className={className && className}
-      onError={() => setImgSrc('/images/file/members/default-user.png')}
+      onError={() => setImgSrc('/images/file/members/default-user.webp')}
       width={size.width}
       height={size.height}
       fetchPriority={'low'}

@@ -75,6 +75,10 @@ tG2Xec9HxQVCEMwy4wIDAQAB
         }
       });
       console.log(res.data);
+      if(res.status === 200) {
+        alert('회원 가입에 성공했습니다.')
+        router.push('/')
+      }
     } catch(err:any) {
       console.log(err)
       if(err?.response?.data?.message) {

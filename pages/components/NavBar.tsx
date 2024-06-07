@@ -115,7 +115,7 @@ export default function NavBar() {
           ${navDarker && styles['darker']}
           `}>
             <h2 className={`${styles['nav-logo']}`}>
-              <Link href='/' title='홈페이지로 이동' className={`${styles['navv']} img-box`}>
+              <Link href='/' title='홈페이지로 이동' className={` img-box`}>
                 {/* <Image src={require('/public/images/logo2.png')} alt='logo' className='onlyPC' />
                 <Image src={require('/public/images/logo3.png')} alt='logo' className='onlySP' /> */}
                 <img src='/images/logo2.png' alt='logo' className='onlyPC' />
@@ -146,7 +146,7 @@ export default function NavBar() {
               {
                 isLogin && <li className={`${styles['login']} ${isSubmenu && styles['opened']}`}>
                 <button className={styles['profile']} onClick={handleSubmenu}>
-                  <img src='/images/members/uptownboy7/profile.jpg' alt='profile' />
+                <img src={`/images/file/members/${myInfo?.split('|')[0]}/profile.webp`} alt='profile' />
                 </button>
                 <div className={styles['submenu']}>
                   <Link href=':'>회원정보 변경</Link>
@@ -190,7 +190,7 @@ export default function NavBar() {
                   {
                     isLogin && <li className={`${styles['login']} ${isSubmenu && styles['opened']}`}>
                     <button className={styles['profile']} onClick={handleSubmenu}>
-                      <img src='/images/members/uptownboy7/profile.jpg' alt='profile' />
+                      <img src={`/images/file/members/${myInfo?.split('|')[0]}/mini.webp`} alt='profile' />
                     </button>
                     <div className={styles['submenu']}>
                       <Link href=':'>회원정보 변경</Link>
