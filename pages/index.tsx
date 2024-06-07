@@ -46,6 +46,7 @@ export const getServerSideProps = async () => {
       uploaded_count,
       user_id,
       user_name,
+      nick_name,
       voted_count
       FROM xe_documents
       WHERE module_srl IN (214, 52)
@@ -530,18 +531,49 @@ export default function Home({
   }), [])
   const [commentData, setCommentData] = useState(initialCommentData)
 
+  // 댓글 텍스트 입력
+  const changeCommentValue = useCallback((text:string) => {
+    const data = {...commentData}
+    data.content = text
+    setCommentData(data)
+  }, [commentData])
   const [commentId, setCommentId] = useState('')
   const [commentPw, setCommentPw] = useState('')
+  useEffect(() => {
+    const data = {...commentData}
+    data.nick_name = commentId
+    data.password = commentPw
+    setCommentData(data)
+  }, [commentId, commentPw])
   useEffect(() => {
     if(myInfo) {
       setCommentId((myInfo as string).split('|')[0])
     } else setCommentId('')
   }, [myInfo])
 
-  const changeCommentSecret = useCallback((comment_srl:number, is_secret:boolean) => {
-    const data = {...replyData, parent_srl: comment_srl, is_secret}
-    setReplyData(data)
-  }, [replyData, replyData.active])
+  // 비밀댓글 버튼
+  const changeCommentSecret = useCallback((is_secret:boolean) => {
+    const data = {...commentData, is_secret}
+    setCommentData(data)
+  }, [commentData, commentData.active])
+
+  // 댓글 작성
+  const submitComment = useCallback(async() => {
+    console.log(commentData)
+    try {
+      const data = { ...commentData }
+      const ip = await axios.get('https://blog.gloomy-store.com/getIp.php')
+      data.ipaddress = ip.data
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/board/0/document/201/comment/push`, data)
+      if(res.status === 200) {
+        console.log(res.data)
+        changeCommentPage(1)
+      } else throw new Error('network failed')
+    } catch (err) {
+      console.log(err)
+      alert('실패 했습니다.')
+    }
+  }, [commentData])
 
   return (
     <>
@@ -1019,7 +1051,7 @@ export default function Home({
                                 }
                                 {
                                   !comment.user_id &&
-                                  <button type='button' onClick={() => profileView(undefined, comment.user_name)}>
+                                  <button type='button' onClick={() => profileView(undefined, comment.nick_name)}>
                                     <MiniProfileImage
                                       user_id='/images/file/members/default-user.png' 
                                       alt='profile image'
@@ -1038,7 +1070,7 @@ export default function Home({
                                       comment.user_id === 'uptownboy7' && <b className='black t-purple'>[운영자] </b>
                                     }  
                                   </span>
-                                  {comment.user_name}
+                                  {comment.nick_name}
                                 </a>
                                 <p>2022.06.08 16:04</p>
                               </div>
@@ -1234,10 +1266,29 @@ export default function Home({
                         <input type='hidden' name='document_srl' value='1027' readOnly={true} tabIndex={-1} className={stylesBoard['invisible']} />
                         <input type='hidden' name='module_srl' value='52' readOnly={true} tabIndex={-1} className={stylesBoard['invisible']} />
                       </div>
-                      <textarea name='comment_form_text' id='comment_form_text2' className={stylesBoard['comment_form_text']} cols={30} rows={10} placeholder='댓글을 남겨주세요!' required={true}></textarea>
+                      <textarea 
+                        name='comment_form_text' 
+                        className={stylesBoard['comment_form_text']} 
+                        cols={30} 
+                        rows={10} 
+                        placeholder='댓글을 남겨주세요!' 
+                        onChange={(e) => changeCommentValue(e.currentTarget.value)}
+                        required={true} 
+                      />
                       <div className={stylesBoard['comment_btns']}>
-                        <input type='checkbox' className={stylesBoard['check_secret']} name='check_secret' id='check_secret' /><label htmlFor='check_secret'>비밀 댓글</label>
-                        <button type='button' className={stylesBoard['submit-button']}>작성</button>
+                        <input 
+                          type='checkbox' 
+                          className={stylesBoard['check_secret']} 
+                          name='check_secret' 
+                          id='check_secret'
+                          onChange={(e) => changeCommentSecret(e.currentTarget.checked)} 
+                        />
+                        <label htmlFor='check_secret'>비밀 댓글</label>
+                        <button 
+                          type='button' 
+                          className={stylesBoard['submit-button']}
+                          onClick={submitComment}
+                        >작성</button>
                       </div>
                     </div>
                     }

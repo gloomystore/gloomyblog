@@ -78,6 +78,7 @@ export const getStaticProps: GetStaticProps<Props> = async (ctx: GetStaticPropsC
         uploaded_count,
         user_id,
         user_name,
+        nick_name,
         voted_count
       FROM xe_documents
       WHERE document_srl = ${document_srl}
@@ -238,7 +239,7 @@ export default function Document({
                     <span id='date' itemProp='datePublished'>2023.09.11</span>
                     <span>
                       <em id='count'>조회수{documents.readed_count}</em>
-                      <em id='name' itemProp='creator'>{documents.user_name}</em>
+                      <em id='name' itemProp='creator'>{documents.nick_name}</em>
                     </span>
                   </p>
                 </div>
