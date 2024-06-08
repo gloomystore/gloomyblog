@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRecoilState, useRecoilValue } from 'recoil';
 import { IsAdminAtom, LoadAtom, MyInfoAtom, ProfileModalActiveAtom, ProfileModalAtom, ScrollBlockAtom } from '@/store/CommonAtom'
 import Link from 'next/link'
+import Image from 'next/image';
 
 export default function ProfileModal() {
 
@@ -34,7 +35,7 @@ export default function ProfileModal() {
       <div className='modal-content modal-profile'>
         <div className='photo-zone'>
           <button>
-            <img src={profileModal?.BOR_mem_id ? `/images/file/members/${profileModal?.BOR_mem_id}/profile.webp` : `/images/file/members/default-user.webp`} alt={profileModal.BOR_mem_name} />
+            <ProfileImage user_id={profileModal?.BOR_mem_id} alt={profileModal.BOR_mem_name} />
           </button>
         </div>
         <div className='script-zone'>
@@ -49,3 +50,31 @@ export default function ProfileModal() {
     </article>
   )
 }
+
+export function ProfileImage ({ 
+  user_id, 
+  alt, 
+  size = {
+    width: 210,
+    height: 210
+  } , 
+  className }: {user_id:string, alt:string, size?: { width: number, height: number} , className?:string}) {
+
+  const [imgSrc, setImgSrc] = useState(user_id ? `/images/file/members/${user_id}/profile.webp` : `/images/file/members/default-user.webp`);
+
+  useEffect(() => {
+    setImgSrc(`/images/file/members/${user_id}/profile.webp`)
+  }, [user_id])
+
+  return (
+    <Image
+      src={imgSrc}
+      alt={alt}
+      className={className && className}
+      onError={() => setImgSrc('/images/file/members/default-user.webp')}
+      width={size.width}
+      height={size.height}
+      fetchPriority={'low'}
+    />
+  );
+};

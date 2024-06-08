@@ -133,7 +133,7 @@ export default function NavBar() {
                 <Link href='https://www.gloomy-store.com' target='_blnk'>Portfolio</Link>
               </li>
               <li>
-                <Link href=':'>I like it</Link>
+                <Link href='/#liker_section'>I like it</Link>
               </li>
               {
                 !isLogin && <li className={styles['join']}>
@@ -146,7 +146,7 @@ export default function NavBar() {
               {
                 isLogin && <li className={`${styles['login']} ${isSubmenu && styles['opened']}`}>
                 <button className={styles['profile']} onClick={handleSubmenu}>
-                <img src={`/images/file/members/${myInfo?.split('|')[0]}/profile.webp`} alt='profile' />
+                <img src={`/images/file/members/${myInfo?.split('|')[1]}/profile.webp`} alt='profile' />
                 </button>
                 <div className={styles['submenu']}>
                   <Link href=':'>회원정보 변경</Link>
@@ -177,7 +177,7 @@ export default function NavBar() {
                     <Link href='https://www.gloomy-store.com'>Portfolio</Link>
                   </li>
                   <li>
-                    <Link href=':'>I like it</Link>
+                    <Link href='/#liker_section'>I like it</Link>
                   </li>
                   {
                     !isLogin && <li className={styles['join']}>
@@ -190,7 +190,7 @@ export default function NavBar() {
                   {
                     isLogin && <li className={`${styles['login']} ${isSubmenu && styles['opened']}`}>
                     <button className={styles['profile']} onClick={handleSubmenu}>
-                      <img src={`/images/file/members/${myInfo?.split('|')[0]}/mini.webp`} alt='profile' />
+                      <img src={`/images/file/members/${myInfo?.split('|')[1]}/mini.webp`} alt='profile' />
                     </button>
                     <div className={styles['submenu']}>
                       <Link href=':'>회원정보 변경</Link>
