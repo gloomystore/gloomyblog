@@ -20,7 +20,7 @@ import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/router";
 import ProfileModal from "./components/ProfileModal";
-
+import Cookies from 'js-cookie'
 
 const AuthChecker = () => {
   const router = useRouter()
@@ -31,22 +31,23 @@ const AuthChecker = () => {
   const [load, setLoad] = useRecoilState(LoadAtom)
   useEffect(() => {
     try {
-      if (localStorage.getItem('accessToken') && localStorage.getItem('myInfo')) {
-        const infoString = localStorage.getItem('myInfo')
+      if (Cookies.get('accessToken') && Cookies.get('myInfo')) {
+        const infoString = Cookies.get('myInfo')
         const info = atob(atob((infoString as string)))
         setMyInfo(info)
-        setMyToken(localStorage.getItem('accessToken'))
+        setMyToken(Cookies.get('accessToken'))
       } else {
         setMyInfo(null)
         setMyToken(null)
       }
     } catch (err) {
-
+      setMyInfo(null)
+      setMyToken(null)
     }
   }, [])
   const setClientHeaders = useCallback(() => {
     axios.interceptors.request.use((req) => {
-      const token = localStorage?.getItem('accessToken')
+      const token = Cookies?.get('accessToken')
       if (token) { req.headers.Authorization = token }
       return new Promise((resolve) => resolve(req))
     }, (error) => {

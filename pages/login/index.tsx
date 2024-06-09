@@ -1,14 +1,15 @@
 import { useRef, useState } from 'react'
 import styles from '@/styles/module/Login.module.scss'
-import { useRouter } from 'next/router';
-import { encryptParam } from '@/utils/common';
-import axios from 'axios';
-import { useRecoilState } from 'recoil';
-import { IsAdminAtom, MyInfoAtom, MyTokenAtom } from '@/store/CommonAtom';
+import { useRouter } from 'next/router'
+import { encryptParam } from '@/utils/common'
+import axios from 'axios'
+import { useRecoilState } from 'recoil'
+import { IsAdminAtom, MyInfoAtom, MyTokenAtom } from '@/store/CommonAtom'
+import Cookies from 'js-cookie'
 
 export default function Login () {
   const router = useRouter()
-  const formRef = useRef<HTMLFormElement>(null);
+  const formRef = useRef<HTMLFormElement>(null)
   const [isAdmin, setIsAdmin] = useRecoilState(IsAdminAtom)
   const [myInfo, setMyInfo] = useRecoilState(MyInfoAtom)
   const [myToken, setMyToken] = useRecoilState(MyTokenAtom)
@@ -22,20 +23,20 @@ export default function Login () {
 
   const logingogo = async(event?: React.KeyboardEvent | React.MouseEvent) => {
     try {
-      event?.preventDefault();
-      if (!formRef.current) return;
+      event?.preventDefault()
+      if (!formRef.current) return
 
-      const idInput = formRef.current.login_mem_id;
-      const passInput = formRef.current.login_mem_pass;
+      const idInput = formRef.current.login_mem_id
+      const passInput = formRef.current.login_mem_pass
 
       if (!idInput.value) {
-        alert('아이디를 입력해 주세요.');
-        idInput.focus();
-        return;
+        alert('아이디를 입력해 주세요.')
+        idInput.focus()
+        return
       } else if (!passInput.value) {
-        alert('비밀번호를 입력해 주세요.');
-        passInput.focus();
-        return;
+        alert('비밀번호를 입력해 주세요.')
+        passInput.focus()
+        return
       }
       const data = {
         id: idInput.value,
@@ -46,11 +47,14 @@ export default function Login () {
       }
       const res = await axios.post(process.env.NEXT_PUBLIC_API_URL + '/api/login', param)
       if(res?.data?.jwt) {
-        localStorage.setItem('myInfo', res?.data?.myInfo)
-        localStorage.setItem('accessToken', res?.data?.jwt)
-        setMyInfo(res?.data?.myInfo && atob(atob(res?.data?.myInfo)))
-        setMyToken(res?.data?.jwt)
-        setIsAdmin(res?.data?.isAdmin === 'true')
+         // JWT와 사용자 정보를 쿠키에 저장합니다.
+        Cookies.set('accessToken', res.data.jwt, { expires: 7 }) // JWT는 7일 동안 유효
+        Cookies.set('myInfo', res.data.myInfo, { expires: 7 }) // 사용자 정보도 7일 동안 유효
+
+        // 상태를 업데이트합니다.
+        setMyInfo(res.data.myInfo && atob(atob(res.data.myInfo)))
+        setMyToken(res.data.jwt)
+        setIsAdmin(res.data.isAdmin === 'true')
         router.push('/')
       }
     } catch(err:any) {
@@ -62,7 +66,7 @@ export default function Login () {
         alert('서버에 문제가 발생 했습니다')
       }
     }
-  };
+  }
 
   return (
     <main className={styles['login-main']}>
@@ -106,5 +110,5 @@ export default function Login () {
         </form>
       </div>
     </main>
-  );
-};
+  )
+}

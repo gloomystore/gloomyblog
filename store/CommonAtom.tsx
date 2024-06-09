@@ -2,9 +2,16 @@ import { RecoilRoot, RecoilState, atom } from 'recoil';
 
 // 로컬 스토리지에서 값을 가져오는 함수
 const getDefaultValueFromLocalStorage = (key: string, defaultValue: any) => {
-  if(typeof window === 'undefined') return defaultValue
-  const storedValue = localStorage.getItem(key);
-  return storedValue !== null ? storedValue : defaultValue;
+  try {
+    if(typeof window === 'undefined') return defaultValue
+    let storedValue = localStorage.getItem(key);
+    if(key === 'myInfo' && typeof storedValue === 'string') storedValue = atob(atob(storedValue))
+    return storedValue !== null ? storedValue : defaultValue;
+  } catch (err) {
+    // atob하다 에러나면 기본값 return
+    console.log(err)
+    return defaultValue
+  }
 };
 
 // Recoil atom 생성 시 기본 값을 로컬 스토리지에서 가져와 설정

@@ -3,28 +3,46 @@ import styles from '@/styles/module/Home.module.scss'
 import stylesBoard from '@/styles/module/Board.module.scss'
 
 // module
-import { useRecoilState } from 'recoil';
+import { useRecoilState } from 'recoil'
 import { IsAdminAtom, LoadAtom, MyInfoAtom, ProfileModalActiveAtom, ProfileModalAtom, ScrollBlockAtom } from '@/store/CommonAtom'
-import HeadComponent from '@/pages/components/HeadComponent';
-import Loading from '@/pages/components/Loading';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import HeadComponent from '@/pages/components/HeadComponent'
+import Loading from '@/pages/components/Loading'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import axios from 'axios'
 
 import Header from '@/pages/components/Header'
-import pool from './api/db/mysql';
-import { RowDataPacket } from 'mysql2';
-import Link from 'next/link';
-import { strip_tags } from '@/utils/common';
-import Image from 'next/image';
-import API from './api';
+import pool from './api/db/mysql'
+import { RowDataPacket } from 'mysql2'
+import Link from 'next/link'
+import { strip_tags } from '@/utils/common'
+import nextCookies from 'next-cookies'
+import jwt from 'jsonwebtoken'
+import { GetServerSidePropsContext } from 'next'
+import MiniProfileImage from './components/MiniProfile'
 
-export const getServerSideProps = async () => {
+export const getServerSideProps = async (ctx:GetServerSidePropsContext) => {
   try {
+    const cookies = nextCookies(ctx)
+    const token = cookies.accessToken
+    let isAdmin = false
+    let myInfo = null
+    if (token) {
+      try {
+        const secret = process.env.NEXT_PUBLIC_JWT_SECRET ?? ''
+        const decoded = jwt.verify(token, secret)
+        const cookieMyInfo = cookies.myInfo ?? null
+        myInfo = cookieMyInfo ? atob(atob(cookieMyInfo)) : null // 디코딩된 사용자 정보
+        isAdmin = myInfo?.split('|')[1] === 'uptownboy7'
+      } catch (error) {
+        console.error('JWT 검증 실패:', error)
+      }
+    }
+
     const page = 1
     const pageSize = 9
     const offset = (page - 1) * pageSize
-    const likersPageSize = 40;
-    const commentsPageSize = 30;
+    const likersPageSize = 40
+    const commentsPageSize = 30
     
     const [documentRows] = await pool.query<RowDataPacket[]>(`
       SELECT blamed_count,
@@ -55,22 +73,22 @@ export const getServerSideProps = async () => {
 
     // 콘텐츠의 길이를 200자로 제한하는 함수
     const limit200 = (str: string) => {
-      return str.slice(0, 200);
-    };
+      return str.slice(0, 200)
+    }
 
     // 각 콘텐츠의 태그를 제거하고 길이를 제한합니다.
-    const rows = documentRows.map((e: any) => ({ ...e, content: limit200(strip_tags(e.content)) }));
+    const rows = documentRows.map((e: any) => ({ ...e, content: limit200(strip_tags(e.content)) }))
 
     // 총 문서 수를 계산합니다.
     const [totalRows] = await pool.query<RowDataPacket[]>(`
       SELECT COUNT(*) as total
       FROM xe_documents
       WHERE module_srl IN (214, 52)
-    `);
-    const totalCount = totalRows[0].total;
+    `)
+    const totalCount = totalRows[0].total
 
     // 총 페이지 수를 계산합니다.
-    const totalPages = Math.ceil(totalCount / pageSize);
+    const totalPages = Math.ceil(totalCount / pageSize)
 
     // youngetable에서 likers 데이터를 가져옵니다.
     const [likersRows] = await pool.query<RowDataPacket[]>(`
@@ -79,41 +97,135 @@ export const getServerSideProps = async () => {
       WHERE liker_like = 1
       ORDER BY liker_reg DESC
       LIMIT ${likersPageSize} OFFSET ${offset}
-    `);
+    `)
 
     const likers = likersRows.map((liker: any) => ({
       liker_id: liker.liker_id,
       liker_name: liker.liker_name,
       liker_like: liker.liker_like,
       liker_reg: liker.liker_reg,
-    }));
+    }))
 
     // 총 likers 수를 계산합니다.
     const [totalLikersRows] = await pool.query<RowDataPacket[]>(`
       SELECT COUNT(*) as total
       FROM youngetable
-    `);
-    const totalLikersCount = totalLikersRows[0].total;
+    `)
+    const totalLikersCount = totalLikersRows[0].total
 
     // 총 페이지 수를 계산합니다.
-    const totalLikersPages = Math.ceil(totalLikersCount / likersPageSize);
+    const totalLikersPages = Math.ceil(totalLikersCount / likersPageSize)
 
     // comments를 가져옵니다.
+    // 댓글을 가져오는 쿼리
     const [commentsRows] = await pool.query<RowDataPacket[]>(`
-      SELECT *
+      
+    WITH RECURSIVE CommentTree AS (
+      -- 최상위 댓글을 가져옵니다.
+      SELECT
+        comment_srl,
+        module_srl,
+        document_srl,
+        parent_srl,
+        is_secret,
+        content,
+        voted_count,
+        blamed_count,
+        notify_message,
+        password,
+        user_id,
+        user_name,
+        member_srl,
+        email_address,
+        homepage,
+        uploaded_count,
+        regdate,
+        last_update,
+        ipaddress,
+        list_order,
+        status,
+        0 AS depth, -- depth 0은 최상위 댓글
+        comment_srl AS top_comment_srl -- 최상위 댓글의 comment_srl
       FROM xe_comments
-      WHERE document_srl IN (201)
-      ORDER BY regdate DESC
-      LIMIT ${commentsPageSize} OFFSET ${offset}
-    `);
+      WHERE document_srl = 201 AND parent_srl = 0
+      
+      UNION ALL
+      
+      -- 답글들을 가져옵니다.
+      SELECT
+        c.comment_srl,
+        c.module_srl,
+        c.document_srl,
+        c.parent_srl,
+        c.is_secret,
+        c.content,
+        c.voted_count,
+        c.blamed_count,
+        c.notify_message,
+        c.password,
+        c.user_id,
+        c.user_name,
+        c.member_srl,
+        c.email_address,
+        c.homepage,
+        c.uploaded_count,
+        c.regdate,
+        c.last_update,
+        c.ipaddress,
+        c.list_order,
+        c.status,
+        ct.depth + 1 AS depth, -- depth는 부모의 depth + 1
+        ct.top_comment_srl -- 최상위 댓글의 comment_srl을 유지합니다.
+      FROM xe_comments c
+      INNER JOIN CommentTree ct ON c.parent_srl = ct.comment_srl
+    )
 
-    const comments = commentsRows.map((comment: any) => ({
+    -- 최종적으로 페이징 처리 및 정렬
+    SELECT
+      *
+    FROM (
+      SELECT
+        *,
+        ROW_NUMBER() OVER (PARTITION BY top_comment_srl ORDER BY depth, regdate) AS row_num -- 각 최상위 댓글 그룹 내에서 순번을 매깁니다.
+      FROM CommentTree
+    ) sub
+    ORDER BY top_comment_srl, row_num -- 최상위 댓글 그룹별로 정렬합니다.
+    LIMIT ${commentsPageSize} OFFSET ${offset}
+    `)
+
+
+
+
+    // comments를 처리합니다.
+  const comments = commentsRows.map((comment: any) => {
+    let displayedContent;
+
+    // 삭제된 댓글
+    if (comment.status === 0 || comment.status === -1) {
+      displayedContent = '삭제된 댓글 입니다.';
+    } 
+    // 비밀 댓글 처리
+    else if (comment.is_secret === 1) {
+      if (isAdmin) {
+        // 운영자는 비밀 댓글 내용을 볼 수 있습니다.
+        displayedContent = comment.content;
+      } else {
+        // 일반 사용자는 비밀 댓글 내용을 볼 수 없습니다.
+        displayedContent = '비밀댓글 입니다.';
+      }
+    } 
+    // 일반 댓글
+    else {
+      displayedContent = comment.content;
+    }
+
+    return {
       comment_srl: comment.comment_srl,
       module_srl: comment.module_srl,
       document_srl: comment.document_srl,
       parent_srl: comment.parent_srl,
       is_secret: comment.is_secret,
-      content: comment.content,
+      content: displayedContent, // 처리된 내용을 할당합니다.
       voted_count: comment.voted_count,
       blamed_count: comment.blamed_count,
       notify_message: comment.notify_message,
@@ -129,13 +241,42 @@ export const getServerSideProps = async () => {
       ipaddress: comment.ipaddress,
       list_order: comment.list_order,
       status: comment.status,
-    }));
+    }
+  })
+
+
+
+
+    // const comments = commentsRows.map((comment: any) => ({
+    //   comment_srl: comment.comment_srl,
+    //   module_srl: comment.module_srl,
+    //   document_srl: comment.document_srl,
+    //   parent_srl: comment.parent_srl,
+    //   is_secret: comment.is_secret,
+    //   content: comment.content,
+    //   voted_count: comment.voted_count,
+    //   blamed_count: comment.blamed_count,
+    //   notify_message: comment.notify_message,
+    //   password: comment.password,
+    //   user_id: comment.user_id,
+    //   user_name: comment.user_name,
+    //   member_srl: comment.member_srl,
+    //   email_address: comment.email_address,
+    //   homepage: comment.homepage,
+    //   uploaded_count: comment.uploaded_count,
+    //   regdate: comment.regdate,
+    //   last_update: comment.last_update,
+    //   ipaddress: comment.ipaddress,
+    //   list_order: comment.list_order,
+    //   status: comment.status,
+    // }))
+
 
     // 총 comments 수를 계산합니다.
-    const totalCommentsCount = commentsRows.length;
+    const totalCommentsCount = commentsRows.length
 
     // comments의 페이지 수를 계산합니다.
-    const totalCommentsPages = Math.ceil(totalCommentsCount / commentsPageSize);
+    const totalCommentsPages = Math.ceil(totalCommentsCount / commentsPageSize)
 
     // datas 객체를 구성합니다.
     const datas = {
@@ -161,7 +302,7 @@ export const getServerSideProps = async () => {
           totalCount: totalCommentsCount,
         },
       },
-    };
+    }
 
     return {
       props: {
@@ -232,7 +373,7 @@ export default function Home({
   const [isAdmin, setIsAdmin] = useRecoilState(IsAdminAtom)
 
   // 로딩
-  const [scrollBlock, setScrollBlock] = useRecoilState(ScrollBlockAtom);
+  const [scrollBlock, setScrollBlock] = useRecoilState(ScrollBlockAtom)
   const [load, setLoad] = useRecoilState(LoadAtom)
   const [isLoad, setIsLoad] = useState(false)
   const [isContentLoad, setIsContentLoad] = useState(false)
@@ -245,23 +386,23 @@ export default function Home({
   const [hydrated, setHydrated] = useState(false)
   useEffect(() => {
     if (Document?.page?.totalPages > 0) {
-      const totalPages = Document.page.totalPages;
-      let startPage = Math.max(1, currentPage - 3);
-      let endPage = Math.min(totalPages, currentPage + 3);
+      const totalPages = Document.page.totalPages
+      let startPage = Math.max(1, currentPage - 3)
+      let endPage = Math.min(totalPages, currentPage + 3)
   
       if (currentPage <= 4) {
-        startPage = 1;
-        endPage = Math.min(10, totalPages);
+        startPage = 1
+        endPage = Math.min(10, totalPages)
       } else if (currentPage > totalPages - 6) {
-        startPage = Math.max(totalPages - 9, 1);
-        endPage = totalPages;
+        startPage = Math.max(totalPages - 9, 1)
+        endPage = totalPages
       }
   
-      const newPaging = [];
+      const newPaging = []
       for (let i = startPage; i <= endPage; i++) {
-        newPaging.push(i);
+        newPaging.push(i)
       }
-      setPaging(newPaging);
+      setPaging(newPaging)
     }
   }, [Document, currentPage])
   const changePage = useCallback((page:number) => {
@@ -269,7 +410,7 @@ export default function Home({
     setCurrentPage(page)
   }, [currentPage])
   useEffect(() => {
-    if(!titleRef.current) return
+    if(!titleRef.current || !hydrated) return
     getBoardData(currentPage)
     titleRef.current.scrollIntoView()
   }, [currentPage])
@@ -296,23 +437,23 @@ export default function Home({
   const [likerRandomKey, setLikerRandomKey] = useState(0)
   useEffect(() => {
     if (likers.page.totalPages > 0) {
-      const totalPages = likers.page.totalPages;
-      let startPage = Math.max(1, currentLikerPage - 3);
-      let endPage = Math.min(totalPages, currentLikerPage + 3);
+      const totalPages = likers.page.totalPages
+      let startPage = Math.max(1, currentLikerPage - 3)
+      let endPage = Math.min(totalPages, currentLikerPage + 3)
   
       if (currentLikerPage <= 4) {
-        startPage = 1;
-        endPage = Math.min(10, totalPages);
+        startPage = 1
+        endPage = Math.min(10, totalPages)
       } else if (currentLikerPage > totalPages - 6) {
-        startPage = Math.max(totalPages - 9, 1);
-        endPage = totalPages;
+        startPage = Math.max(totalPages - 9, 1)
+        endPage = totalPages
       }
   
-      const newPaging = [];
+      const newPaging = []
       for (let i = startPage; i <= endPage; i++) {
-        newPaging.push(i);
+        newPaging.push(i)
       }
-      setLikerPaging(newPaging);
+      setLikerPaging(newPaging)
     }
   }, [likers, currentLikerPage])
   const changeLikerPage = useCallback((page:number) => {
@@ -398,41 +539,41 @@ export default function Home({
   const [comments, setComments] = useState(datas.comments)
   const [currentCommentPage, setCurrentCommentPage] = useState(1)
   const [commentPaging, setCommentPaging]:[number[], Function] = useState([1])
-  const [commandPageRandomKey, setCommandPageRandomKey] = useState(0)
+  const [commentPageRandomKey, setCommentPageRandomKey] = useState(0)
   useEffect(() => {
     if (comments.page.totalPages > 0) {
-      const totalPages = comments.page.totalPages;
-      let startPage = Math.max(1, currentCommentPage - 3);
-      let endPage = Math.min(totalPages, currentCommentPage + 3);
+      const totalPages = comments.page.totalPages
+      let startPage = Math.max(1, currentCommentPage - 3)
+      let endPage = Math.min(totalPages, currentCommentPage + 3)
   
       if (currentCommentPage <= 4) {
-        startPage = 1;
-        endPage = Math.min(10, totalPages);
+        startPage = 1
+        endPage = Math.min(10, totalPages)
       } else if (currentCommentPage > totalPages - 6) {
-        startPage = Math.max(totalPages - 9, 1);
-        endPage = totalPages;
+        startPage = Math.max(totalPages - 9, 1)
+        endPage = totalPages
       }
   
-      const newPaging = [];
+      const newPaging = []
       for (let i = startPage; i <= endPage; i++) {
-        newPaging.push(i);
+        newPaging.push(i)
       }
-      setCommentPaging(newPaging);
+      setCommentPaging(newPaging)
     }
   }, [comments, currentCommentPage])
   const changeCommentPage = useCallback((page:number) => {
     if(!hydrated) setHydrated(true)
     console.log(page)
     setCurrentCommentPage(page)
-    setCommandPageRandomKey(Math.random())
+    setCommentPageRandomKey(Math.random())
   }, [currentCommentPage])
 
   const commentTitleRef = useRef<HTMLHeadingElement>(null)
   useEffect(() => {
-    if(!commentTitleRef.current || commandPageRandomKey === 0) return
+    if(!commentTitleRef.current || commentPageRandomKey === 0) return
     getCommentData(currentCommentPage)
     commentTitleRef.current.scrollIntoView()
-  }, [commandPageRandomKey, currentCommentPage])
+  }, [commentPageRandomKey, currentCommentPage])
   const getCommentData = useCallback(async(page:number) => {
     try {
       const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/board/0/document/201/comment/${page}`)
@@ -451,18 +592,17 @@ export default function Home({
     active: false,
     module_srl: 0,
     document_srl: 0,
-    parent_srl: 0,
-    comment_srl: 0,
-    user_name: '',
-    user_id: '',
+    parent_srl: -1,
+    user_name: myInfo ? decodeURIComponent(myInfo.split('|')[2]): '',
+    user_id: myInfo ? myInfo.split('|')[1] : '',
+    member_srl: myInfo ? myInfo.split('|')[0] : '',
+    email_address: myInfo ? myInfo.split('|')[4] : '',
     content: '',
     is_secret: false,
     voted_count: 0,
     blamed_count: 0,
     notify_message: '',
     password: '',
-    member_srl: '',
-    email_address: '',
     homepage: '',
     uploaded_count: '',
     last_update: '',
@@ -470,7 +610,7 @@ export default function Home({
     ipaddress: '',
     list_order: '',
     status: 1,
-  }), [])
+  }), [myInfo])
   const [replyData, setReplyData] = useState(initialRepData)
 
   const onSetReplyData = useCallback((module_srl: number, document_srl: number, parent_srl: number) => {
@@ -487,20 +627,62 @@ export default function Home({
       }
       setReplyData(data)
     }
-  }, [replyData.parent_srl])
+  }, [replyData])
+
+  // 답글 텍스트 입력
+  const changeReplyTextValue = useCallback((text:string) => {
+    const data = {...replyData}
+    data.content = text
+    setReplyData(data)
+  }, [replyData])
 
   const [replyId, setReplyId] = useState('')
   const [replyPw, setReplyPw] = useState('')
+
+  // input에 아이디 비번 바꿀 경우
   useEffect(() => {
-    if(myInfo) {
-      setReplyId((myInfo as string).split('|')[1])
-    } else setReplyId('')
+    const data = {...replyData}
+    data.user_name = replyId
+    data.password = replyPw
+    setReplyData(data)
+  }, [replyId, replyPw])
+
+  // 내가 로그인한 상태라면
+  useEffect(() => {
+    const data = {
+      ...replyData,
+      user_name: myInfo ? decodeURIComponent(myInfo.split('|')[2]): '',
+      user_id: myInfo ? myInfo.split('|')[1] : '',
+      member_srl: myInfo ? myInfo.split('|')[0] : '',
+      email_address: myInfo ? myInfo.split('|')[4] : '',
+    }
+    setReplyData(data)
   }, [myInfo])
 
+  // 비밀답글 버튼
   const changeReplySecret = useCallback((comment_srl:number, is_secret:boolean) => {
     const data = {...replyData, parent_srl: comment_srl, is_secret}
     setReplyData(data)
   }, [replyData, replyData.active])
+
+  // 답글 작성
+  const submitReply = useCallback(async() => {
+    try {
+      const data = { ...replyData }
+      if(!myInfo && (!data.user_name || !data.password)) return alert('아이디와 비밀번호를 채워주세요')
+      const ip = await axios.get('https://blog.gloomy-store.com/getIp.php')
+      data.ipaddress = ip.data
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/board/0/document/201/comment/push`, data)
+      if(res.status === 200 || res.status === 201) {
+        console.log(res.data)
+        setReplyData(initialRepData)
+        changeCommentPage(1)
+      } else throw new Error('network failed')
+    } catch (err) {
+      console.log(err)
+      alert('실패 했습니다.')
+    }
+  }, [replyData])
 
   // 댓글
   const initialCommentData = useMemo(() => ({
@@ -536,6 +718,8 @@ export default function Home({
   }, [commentData])
   const [commentId, setCommentId] = useState('')
   const [commentPw, setCommentPw] = useState('')
+
+  // input에 아이디 비번 바꿀 경우
   useEffect(() => {
     const data = {...commentData}
     data.user_name = commentId
@@ -565,6 +749,7 @@ export default function Home({
     console.log(commentData)
     try {
       const data = { ...commentData }
+      if(!myInfo && (!data.user_name || !data.password)) return alert('아이디와 비밀번호를 채워주세요')
       const ip = await axios.get('https://blog.gloomy-store.com/getIp.php')
       data.ipaddress = ip.data
       const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/board/0/document/201/comment/push`, data)
@@ -577,6 +762,47 @@ export default function Home({
       alert('실패 했습니다.')
     }
   }, [commentData])
+
+  // 댓글 삭제
+  const onDeleteComment = useCallback(async(comment_srl:number) => {
+    try {
+      if(!myInfo) {
+        // 로그아웃한 댓글
+        const Prompt = prompt('비밀번호를 입력해주세요')
+        const data = {
+          comment_srl,
+          id: '',
+          password: Prompt
+        }
+        const res = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/board/0/document/201/comment/delete`, {
+          data,
+          withCredentials: true,
+        })
+        if(res.status === 200 || res.status === 201) {
+          alert('삭제에 성공 했습니다.')
+          getCommentData(currentCommentPage)
+        }
+      } else {
+        // 내 댓글
+        const data = {
+          comment_srl,
+          id: myInfo.split('|')[1],
+          password: ''
+        }
+        const res = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/board/0/document/201/comment/delete`, {
+          data,
+          withCredentials: true,
+        })
+        if(res.status === 200 || res.status === 201) {
+          alert('삭제에 성공 했습니다.')
+          getCommentData(currentCommentPage)
+        }
+      }
+    } catch(err) {
+      console.log(err)
+      alert('실패했습니다.')
+    }
+  }, [])
 
   return (
     <>
@@ -1037,9 +1263,9 @@ export default function Home({
                   <h3 className={stylesBoard['comment_total']} ref={commentTitleRef}>댓글: <span id='comment_total_num'>{datas?.comments?.page?.totalCount}</span></h3>
                   <div className={stylesBoard['comment_list_wrapper']} id='comment_list_wrapper'>
                     {
-                      [commandPageRandomKey === 0 ? datas.comments?.content : comments?.content].map(e => (
+                      [commentPageRandomKey === 0 ? datas.comments?.content : comments?.content].map(e => (
                         e.map((comment:any, idx:number) => (
-                          <div className={stylesBoard['comment_list_wrap']} key={'comment' + idx}>
+                          <div className={`${stylesBoard['comment_list_wrap']} ${comment.parent_srl !== 0 && stylesBoard['comment_rep']}`} key={'comment' + idx}>
                             <div className={stylesBoard['comment_list']}>
                               <div className={stylesBoard['comment_photo']}>
                                 
@@ -1079,10 +1305,12 @@ export default function Home({
                                   <p>{comment.regdate}</p>
                                 </div>
                                 
-                                <div className={stylesBoard['comment_text']}>{comment.content}</div>
+                                <div className={stylesBoard['comment_text']}>
+                                  {comment.content}
+                                </div>
                                   <div className={stylesBoard['comment_edit']}>
                                     {
-                                      load && <>
+                                      load && comment.status === 1 && <>
                                       {
                                       // 로그인 한 댓글
                                         comment.user_id ? <>
@@ -1092,7 +1320,11 @@ export default function Home({
                                             (myInfo as string).split('|')[1] === comment.user_id && <p>
                                             <button type='button' className={stylesBoard['onRep']}>수정</button>
                                             <span> / </span>
-                                            <button type='button' className={stylesBoard['onRep']}>삭제</button>
+                                            <button 
+                                              type='button' 
+                                              className={stylesBoard['onRep']}
+                                              onClick={() => onDeleteComment(comment.comment_srl)}
+                                            >삭제</button>
                                           </p>
                                           }
                                         </>
@@ -1103,26 +1335,29 @@ export default function Home({
                                           !myInfo && <p>
                                             <button type='button' className={stylesBoard['onRep']}>수정</button>
                                             <span> / </span>
-                                            <button type='button' className={stylesBoard['onRep']}>삭제</button>
+                                            <button 
+                                              type='button' 
+                                              className={stylesBoard['onRep']}
+                                              onClick={() => onDeleteComment(comment.comment_srl)}
+                                            >삭제</button>
                                           </p>
                                         }
                                         </>
                                       }
                                     </>
                                   }
-                                  {/* <p>
-                                    <button className={stylesBoard['onRep']}>수정</button>
-                                    <span> / </span>
-                                    <button className={stylesBoard['onRep']}>삭제</button>
-                                  </p>
-                                  <button className={stylesBoard['onRep']}>답글</button> */}
-                                  <button 
+                                  {
+                                    comment.parent_srl === 0 &&
+                                    comment.status === 1 &&
+                                    !(comment.is_secret && myInfo?.split('|')[1] !== 'uptownboy7') &&
+                                    <button 
                                     type='button'
                                     className={stylesBoard['onRep']}
                                     onClick={() => onSetReplyData(comment.module_srl, comment.document_srl, comment.comment_srl)}  
                                   >
                                     답글
                                   </button>
+                                  }
                                 </div>
                               </div>
                             </div>
@@ -1156,11 +1391,14 @@ export default function Home({
                                           onChange={(e) => setReplyPw(e.currentTarget.value)}
                                         />
                                       </div>
-                                      <input type='hidden' name='document_srl' value='201' readOnly tabIndex={-1} className={stylesBoard['invisible']} />
-                                      <input type='hidden' name='module_srl' value='50' readOnly tabIndex={-1} className={stylesBoard['invisible']} />
-                                      <input type='hidden' name='parent_srl' value='325' readOnly tabIndex={-1} className={stylesBoard['invisible']} />
                                     </div>
-                                    <textarea name='comment_form_txt' className={stylesBoard['comment_form_text']} cols={30} rows={10} placeholder='댓글을 남겨주세요!' required></textarea>
+                                    <textarea 
+                                      name='comment_form_txt' 
+                                      className={stylesBoard['comment_form_text']} 
+                                      cols={30} 
+                                      rows={10} 
+                                      placeholder='댓글을 남겨주세요!' onChange={(e) => changeReplyTextValue(e.currentTarget.value)}
+                                    ></textarea>
                                     <div className={stylesBoard['comment_btns']}>
                                       <input 
                                         type='checkbox' 
@@ -1171,7 +1409,11 @@ export default function Home({
                                       <label htmlFor={'check_secret_' + idx}>
                                         비밀 댓글
                                       </label>
-                                      <button type='button' className={stylesBoard['submit-button']}>작성</button>
+                                      <button 
+                                        type='button' 
+                                        className={stylesBoard['submit-button']}
+                                        onClick={submitReply}
+                                      >작성</button>
                                     </div>
                                   </div>
                                 </form>
@@ -1305,33 +1547,5 @@ export default function Home({
         </article>
       </section>
     </>
-  );
+  )
 }
-
-export function MiniProfileImage ({ 
-  user_id, 
-  alt, 
-  size = {
-    width: 60,
-    height: 60
-  } , 
-  className }: {user_id:string, alt:string, size?: { width: number, height: number} , className?:string}) {
-
-  const [imgSrc, setImgSrc] = useState(`/images/file/members/${user_id}/mini.webp`);
-
-  useEffect(() => {
-    setImgSrc(`/images/file/members/${user_id}/mini.webp`)
-  }, [user_id])
-
-  return (
-    <Image
-      src={imgSrc}
-      alt={alt}
-      className={className && className}
-      onError={() => setImgSrc('/images/file/members/default-user.webp')}
-      width={size.width}
-      height={size.height}
-      fetchPriority={'low'}
-    />
-  );
-};

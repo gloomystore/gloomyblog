@@ -136,7 +136,22 @@
             }
           }
         }
-        
+        &.comment_rep {
+          padding-left: 48px;
+          position: relative;
+          &::before {
+            content: '';
+            left: 0;
+            top: -25px;
+            background: url('/images/icon/arrow-rep.png');
+            background-position: center;
+            background-size: contain;
+            position: absolute;
+            display: inline-block;
+            width: 48px;
+            height: 48px;
+          }
+        }
       }
     }
     // comment

@@ -7,6 +7,7 @@ import { useRecoilState, useRecoilValue } from 'recoil';
 import { IsAdminAtom, LoadAtom, MyInfoAtom, MyTokenAtom, ScrollBlockAtom } from '@/store/CommonAtom'
 import Link from 'next/link'
 import { useRouter } from 'next/router';
+import Cookie from 'js-cookie'
 
 export default function NavBar() {
   // const router = useRouter()
@@ -97,7 +98,8 @@ export default function NavBar() {
   }, [])
 
   const logout = useCallback(() => {
-    localStorage.removeItem('myInfo')
+    Cookie.remove('myInfo')
+    Cookie.remove('accessToken')
     setIsAdmin(false)
     setMyInfo(null)
     setMyToken(null)
