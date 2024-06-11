@@ -36,7 +36,7 @@ const AuthChecker = () => {
         const info = atob(atob((infoString as string)))
         setMyInfo(info)
         setMyToken(Cookies.get('accessToken'))
-        Cookies.set('isPerson', 'true', { expires: 1 })
+        Cookies.set('isPerson', 'true', { expires: 5 })
       } else {
         setMyInfo(null)
         setMyToken(null)

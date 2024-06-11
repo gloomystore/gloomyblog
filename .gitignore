@@ -40,4 +40,5 @@ pages/api/*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-.svn
+.svnmiddleware.ts
+public/getIp.php
