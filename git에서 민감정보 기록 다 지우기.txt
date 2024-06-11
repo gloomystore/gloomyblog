@@ -3,12 +3,11 @@ Git에서 특정 파일(middleware.ts)과 관련된 모든 기록을 지우고, 
 
 ★★★★★★★★★★★★★★★
 git branch # 현재 브랜치 확인
-git checkout -b backup-branch # 백업 브랜치 생성
-git rm --cached public/getIp.php # Git의 인덱스에서만 제거, 로컬 파일은 유지
-echo 'public/getIp.php' >> .gitignore
-git commit -m "Remove public/getIp.php from tracking and add to .gitignore"
+git rm --cached .svn/* # Git의 인덱스에서만 제거, 로컬 파일은 유지
+#echo '.svn/*' >> .gitignore
+git commit -m "Remove .svn/* from tracking and add to .gitignore"
 git filter-branch --force --index-filter \
-'git rm --cached --ignore-unmatch public/getIp.php' \
+'git rm --cached --ignore-unmatch .svn/*' \
 --prune-empty --tag-name-filter cat -- --all
 git reflog expire --expire=now --all
 git gc --prune=now --aggressive
