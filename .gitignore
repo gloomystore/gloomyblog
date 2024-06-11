@@ -42,3 +42,6 @@ pages/api/*
 next-env.d.ts
 .svnmiddleware.ts
 public/getIp.php
+public/getIp.php
+.svn
+.svn
