@@ -9,15 +9,15 @@ const nextConfig = {
   }),
   async headers() {
     return [
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'Content-Security-Policy',
-            value: "default-src 'self' https://blog.gloomy-store.com; script-src 'self' 'unsafe-eval' https://blog.gloomy-store.com; style-src 'self' 'unsafe-inline' https://blog.gloomy-store.com;",
-          },
-        ],
-      },
+      // {
+      //   source: '/(.*)',
+      //   headers: [
+      //     {
+      //       key: 'Content-Security-Policy',
+      //       value: "default-src 'self' https://blog.gloomy-store.com; script-src 'self' 'unsafe-eval' https://blog.gloomy-store.com; style-src 'self' 'unsafe-inline' https://blog.gloomy-store.com;",
+      //     },
+      //   ],
+      // },
     ];
   },
 };

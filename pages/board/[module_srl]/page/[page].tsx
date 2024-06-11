@@ -14,9 +14,10 @@ import { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult
 import { ParsedUrlQuery } from 'querystring';
 import pool from '@/pages/api/db/mysql';
 import { RowDataPacket } from 'mysql2';
-import { strip_tags } from '@/utils/common';
+import { removeTags, removeTagsExceptCode } from '@/utils/common';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
+import nextCookies from 'next-cookies'
+import jwt from 'jsonwebtoken'
 
 type Props = {
   props : {
@@ -25,10 +26,26 @@ type Props = {
 }
 export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServerSidePropsContext<ParsedUrlQuery>) => {
   try {
-    const { page = '1', module_srl = '52' } = ctx.params || {};
+    const cookies = nextCookies(ctx)
+    const token = cookies.accessToken
+    let isAdmin = false
+    let myInfo = null
+    if (token) {
+      try {
+        const secret = process.env.NEXT_PUBLIC_JWT_SECRET ?? ''
+        const decoded = jwt.verify(token, secret)
+        const cookieMyInfo = cookies.myInfo ?? null
+        myInfo = cookieMyInfo ? atob(atob(cookieMyInfo)) : null // 디코딩된 사용자 정보
+        isAdmin = myInfo?.split('|')[1] === process.env.NEXT_PUBLIC_ADMIN_ID
+      } catch (error) {
+        console.error('JWT 검증 실패:', error)
+      }
+    }
+
+    const page = parseInt(ctx?.params?.page as string)
+    const module_srl = parseInt(ctx?.params?.module_srl as string)
     const pageSize = 9;
-    const offset = (parseInt(page as string) - 1) * pageSize;
-    const moduleSrl = parseInt(module_srl as string);
+    const offset = (page - 1) * pageSize
 
     const [documentRows] = await pool.query<RowDataPacket[]>(`
       SELECT blamed_count,
@@ -55,17 +72,20 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
       WHERE module_srl = ?
       ORDER BY regdate DESC
       LIMIT ? OFFSET ?
-    `, [moduleSrl, pageSize, offset])
+    `, [module_srl, pageSize, offset])
 
-    const limit200 = (str:string) => {
+    // 콘텐츠의 길이를 200자로 제한하는 함수
+    const limit200 = (str: string) => {
       return str.slice(0, 200)
     }
-    const rows = documentRows.map((e:any) => ({...e, content: limit200(strip_tags(e.content))}))
+
+    // 각 콘텐츠의 태그를 제거하고 길이를 제한합니다.
+    const rows = documentRows.map((e: any) => ({ ...e, content: limit200(removeTags(e.content)) }))
 
     const [totalRows] = await pool.query<RowDataPacket[]>(`
       SELECT COUNT(*) as total
       FROM xe_documents
-      WHERE module_srl IN (${moduleSrl})
+      WHERE module_srl IN (${module_srl})
     `);
     const totalCount = totalRows[0].total;
 
@@ -78,12 +98,13 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
         currentPage: Number(page),
         totalPages
       },
-      module_srl: moduleSrl
+      module_srl: module_srl
     }
     
     return {
       props: {
-        documents: JSON.parse(JSON.stringify(documents))
+        documents: JSON.parse(JSON.stringify(documents)),
+        module_srl
       }
     } as GetServerSidePropsResult<any>
   } catch(err) {
@@ -97,15 +118,17 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
             totalPages: 0,
           },
           module_srl: 0,
-        }
+        },
+        module_srl: 0,
       }
     }
   }
 };
 
 export default function Board({
-  documents = '[]'
-}:{documents: any}) {
+  documents = '[]',
+  module_srl,
+}:{documents: any, module_srl:number}) {
   // 로딩
   const [scrollBlock, setScrollBlock] = useRecoilState(ScrollBlockAtom);
   const [load, setLoad] = useRecoilState(LoadAtom)
@@ -149,7 +172,17 @@ export default function Board({
           <main className='gl-card-list'>
             <div className='gallery_wrap' itemScope itemType='https://schema.org/CreativeWork'>
               <div>
-                <h1 className='invisible'>글루미스토어 - 프론트엔드 개발자의 포트폴리오 </h1>
+                <h1 className='invisible'>글루미스토어 - 
+                  {
+                    documents.module_srl === 52 && '개발 블로그'
+                  } 
+                  {
+                    documents.module_srl === 214 && '일상 일기'
+                  } 
+                  {
+                    ![52, 214].includes(module_srl) && '나의 블로그'
+                  } 
+                </h1>
                 <h2 className='title02 deco' itemProp='title' id='title'>
                   {
                     documents.module_srl === 52 && (
@@ -184,7 +217,7 @@ export default function Board({
                     >
                       <p className='thumbnail'>
                         <img
-                          src={item.thumb && item.thumb !== 'null' ? `/images/file/board/${item.document_srl}/thumb.${item.thumb} ` : '/images/header2_3.webp'}
+                          src={item.thumb && item.thumb !== 'null' ? `/images/file/board/${item.document_srl}/thumb.${item.thumb} ` : '/images/flower6.webp'}
                           alt='thumbnail'
                           onError={(e) => (e.currentTarget.src = '/images/header2_3.webp')}
                         />
@@ -197,7 +230,7 @@ export default function Board({
                           {item.title}
                         </p>
                         <p className='text'>
-                          {strip_tags(item.content)}
+                          {removeTagsExceptCode(item.content)}
                         </p>
                         <p className='date' itemProp='datePublished'>
                           <span>{item.regdate}</span>

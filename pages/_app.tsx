@@ -36,6 +36,7 @@ const AuthChecker = () => {
         const info = atob(atob((infoString as string)))
         setMyInfo(info)
         setMyToken(Cookies.get('accessToken'))
+        Cookies.set('isPerson', 'true', { expires: 1 })
       } else {
         setMyInfo(null)
         setMyToken(null)
@@ -72,7 +73,7 @@ const AuthChecker = () => {
         // 400번대
         if (response?.status === 404) {
           message = '페이지 확인 불가'
-          router.push('/not-found')
+          // router.push('/not-found')
         } else if (response?.status === 405) {
           message = '유효한 로그인이 아닙니다'
           setIsAdmin(false)

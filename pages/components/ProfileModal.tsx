@@ -63,7 +63,8 @@ export function ProfileImage ({
   const [imgSrc, setImgSrc] = useState(user_id ? `/images/file/members/${user_id}/profile.webp` : `/images/file/members/default-user.webp`);
 
   useEffect(() => {
-    setImgSrc(`/images/file/members/${user_id}/profile.webp`)
+    if(user_id) setImgSrc(`/images/file/members/${user_id}/profile.webp`)
+    else setImgSrc(`/images/file/members/default-user.webp`)
   }, [user_id])
 
   return (

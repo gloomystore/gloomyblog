@@ -84,7 +84,7 @@ export default function Header() {
           <a
             href='#!'
             title='go to profile'
-            onClick={(e) => profileView('uptownboy7')}
+            onClick={(e) => profileView((process.env.NEXT_PUBLIC_ADMIN_ID as string))}
           >
             <img
               src='/images/members/uptownboy7/profile.jpg'
