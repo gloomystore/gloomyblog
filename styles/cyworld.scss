@@ -1,3 +1,4 @@
+@import './var.scss';
 .gl-wrap {
   position: relative;
   width: 100%;
@@ -6,12 +7,13 @@
   margin-top: 150px;
   margin-bottom: 150px;
   padding: 25px 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  filter: drop-shadow(2px 4px 6px $-c-black);
   .gl-wrap__inner {
     position: relative;
     max-width: 1200px;
     margin: auto;
-    border-radius: 30px;
+    border-radius: 24px;
     background: #e1d0c9;
     border: 2px solid grey;
     &::before {
@@ -97,6 +99,27 @@
       p {
         width: 100%;
       }
+    }
+  }
+}
+// 방명록
+.gl-ui-main {
+  img {
+    display: inline-block;
+    width: 100%;
+  }
+  > div {
+    display: flex;
+    flex-wrap: wrap;
+    .gl-ui-left {
+      .statistics-area {
+        p {
+          
+        }
+      }
+    }
+    .gl-ui-right {
+
     }
   }
 }

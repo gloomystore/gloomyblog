@@ -61,18 +61,29 @@ export function ProfileImage ({
   className }: {user_id:string, alt:string, size?: { width: number, height: number} , className?:string}) {
 
   const [imgSrc, setImgSrc] = useState(user_id ? `/images/file/members/${user_id}/profile.webp` : `/images/file/members/default-user.webp`);
-
+  const [noHover, setNoHover] = useState(false)
   useEffect(() => {
-    if(user_id) setImgSrc(`/images/file/members/${user_id}/profile.webp`)
-    else setImgSrc(`/images/file/members/default-user.webp`)
+    if(user_id) {
+      setNoHover(false)
+      setImgSrc(`/images/file/members/${user_id}/profile.webp`)
+    }
+    else {
+      setNoHover(true)
+      setImgSrc(`/images/file/members/default-user.webp`)
+    }
+  }, [user_id])
+
+  const onError = useCallback(() => {
+    setNoHover(true)
+    setImgSrc('/images/file/members/default-user.webp')
   }, [user_id])
 
   return (
     <Image
       src={imgSrc}
       alt={alt}
-      className={className && className}
-      onError={() => setImgSrc('/images/file/members/default-user.webp')}
+      className={`${className && className} ${noHover && 'no-hover'}`}
+      onError={() => onError()}
       width={size.width}
       height={size.height}
       fetchPriority={'low'}

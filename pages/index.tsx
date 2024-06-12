@@ -130,6 +130,8 @@ export const getServerSideProps = async (ctx:GetServerSidePropsContext) => {
      // comments의 페이지 수를 계산합니다.
      const totalCommentsPages = Math.ceil(totalCommentsResult?.[0]?.totalComments/commentsPageSize)
 
+     const commentOffset = (totalCommentsPages - 1) * commentsPageSize
+
     // 댓글을 가져오는 쿼리
     const [commentsRows] = await pool.query<RowDataPacket[]>(`
       WITH RECURSIVE CommentTree AS (
@@ -203,7 +205,7 @@ export const getServerSideProps = async (ctx:GetServerSidePropsContext) => {
         FROM CommentTree
       ) sub
       ORDER BY top_comment_srl, row_num -- 최상위 댓글 그룹별로 정렬합니다.
-      LIMIT ${commentsPageSize} OFFSET ${offset}
+      LIMIT ${commentsPageSize} OFFSET ${commentOffset}
     `)
 
     // comments를 처리합니다.
@@ -273,7 +275,7 @@ export const getServerSideProps = async (ctx:GetServerSidePropsContext) => {
       comments: {
         content: comments,
         page: {
-          currentPage: 1,
+          currentPage: totalCommentsPages,
           totalContents: totalCommentsResult?.[0]?.totalComments,
           totalPages: totalCommentsPages,
         },
@@ -513,7 +515,7 @@ export default function Home({
 
   // comment data 
   const [comments, setComments] = useState(datas.comments)
-  const [currentCommentPage, setCurrentCommentPage] = useState(1)
+  const [currentCommentPage, setCurrentCommentPage] = useState(datas.comments.page.currentPage)
   const [commentPaging, setCommentPaging]:[number[], Function] = useState([1])
   const [commentPageRandomKey, setCommentPageRandomKey] = useState(0)
   useEffect(() => {
@@ -544,11 +546,14 @@ export default function Home({
     setCommentPageRandomKey(Math.random())
   }, [hydrated, commentPageRandomKey, currentCommentPage])
 
+  const clickCommentPage = useCallback((page:number) => {
+    if(!commentTitleRef.current) return
+    changeCommentPage(page)
+    commentTitleRef.current.scrollIntoView()
+  }, [])
   const commentTitleRef = useRef<HTMLHeadingElement>(null)
   useEffect(() => {
-    if(!commentTitleRef.current || commentPageRandomKey === 0) return
     getCommentData(currentCommentPage)
-    commentTitleRef.current.scrollIntoView()
   }, [commentPageRandomKey, currentCommentPage])
   const getCommentData = useCallback(async(page:number) => {
     try {
@@ -732,6 +737,7 @@ export default function Home({
       if(res.status === 200 || res.status === 201) {
         console.log(res.data)
         changeCommentPage(1)
+        setCommentData(initialCommentData)
       } else throw new Error('network failed')
     } catch (err) {
       console.log(err)
@@ -921,7 +927,7 @@ export default function Home({
                 datas?.documents?.content?.map((item:any, idx:number) => (
                   <div key={idx + 'card' + item.id} className='card_wrapper js-fadeIn' itemProp='workExample'>
                     <Link
-                      href={`/board/-1/document/${item.document_srl}`}
+                      href={`/board/-1/document/${item.document_srl}#title`}
                       title={item.title}
                       className='card'
                     >
@@ -961,7 +967,7 @@ export default function Home({
                 Document && Document?.content?.length && Document?.content?.map((item:any, idx:number) => (
                   <div key={idx + 'card' + item.id} className='card_wrapper js-fadeIn' itemProp='workExample'>
                     <Link
-                      href={`/board/-1/document/${item.document_srl}`}
+                      href={`/board/-1/document/${item.document_srl}#title`}
                       title={item.title}
                       className='card'
                     >
@@ -1556,7 +1562,8 @@ export default function Home({
                                       className={stylesBoard['comment_form_text']} 
                                       cols={30} 
                                       rows={10} 
-                                      placeholder='댓글을 남겨주세요!' onChange={(e) => changeReplyTextValue(e.currentTarget.value)}
+                                      placeholder='댓글을 남겨주세요!' 
+                                      value={replyData.content}onChange={(e) => changeReplyTextValue(e.currentTarget.value)}
                                     ></textarea>
                                     <div className={stylesBoard['comment_btns']}>
                                       <input 
@@ -1587,7 +1594,7 @@ export default function Home({
                       type='button'
                       className='arrow_btn double first'
                       aria-label='arrow_btn_double_first'
-                      onClick={() => changeCommentPage(1)}
+                      onClick={() => clickCommentPage(1)}
                     >
                       <i className='fa fa-angle-double-left'></i>
                     </button>
@@ -1597,7 +1604,7 @@ export default function Home({
                       aria-label='arrow_btn_single_prev'
                       onClick={() => {
                         if(currentCommentPage > 1) {
-                          changeCommentPage(currentCommentPage - 1)
+                          clickCommentPage(currentCommentPage - 1)
                         }
                       }}
                       id='pageBoardLeft'
@@ -1611,7 +1618,7 @@ export default function Home({
                           type='button'
                           className={`paging_btn ${page === currentCommentPage && 'active'}`}
                           aria-label={`paging_btn_${page}`}
-                          onClick={() => changeCommentPage(page)}
+                          onClick={() => clickCommentPage(page)}
                         >
                           <i className='fa'>{page}</i>
                         </button>
@@ -1623,7 +1630,7 @@ export default function Home({
                       aria-label='arrow_btn_single_next'
                       onClick={() => {
                         if(currentCommentPage < comments.page.totalPages) {
-                          changeCommentPage(currentCommentPage + 1)
+                          clickCommentPage(currentCommentPage + 1)
                         }
                       }}
                       id='pageBoardRight'
@@ -1634,7 +1641,7 @@ export default function Home({
                       type='button'
                       className='arrow_btn double last'
                       aria-label='arrow_btn_double_last'
-                      onClick={() => changeCommentPage(comments.page.totalPages)}
+                      onClick={() => clickCommentPage(comments.page.totalPages)}
                       id='pageBoardRightDouble'
                     >
                       <i className='fa fa-angle-double-right'></i>
@@ -1642,7 +1649,7 @@ export default function Home({
                   </div>
                   <form name='comment_form' id='comment_form' className={stylesBoard['comment_form']} data-gtm-form-interact-id='0'>
                     {
-                      load && <div className={stylesBoard['comment_form_rep_textarea']}>
+                      load && <div className={stylesBoard['comment_form_textarea']}>
                       <div id='comment_form_name' className={stylesBoard['comment_form_name']}>
                         <div>
                           <input 
@@ -1667,9 +1674,6 @@ export default function Home({
                             onChange={(e) => setCommentPw(e.currentTarget.value)}
                           />
                         </div>
-                        {/* 스팸 방지문구 영역은 주석 처리합니다 */}
-                        <input type='hidden' name='document_srl' value='1027' readOnly={true} tabIndex={-1} className={stylesBoard['invisible']} />
-                        <input type='hidden' name='module_srl' value='52' readOnly={true} tabIndex={-1} className={stylesBoard['invisible']} />
                       </div>
                       <textarea 
                         name='comment_form_text' 
@@ -1677,6 +1681,7 @@ export default function Home({
                         cols={30} 
                         rows={10} 
                         placeholder='댓글을 남겨주세요!' 
+                        value={commentData.content}
                         onChange={(e) => changeCommentValue(e.currentTarget.value)}
                         required={true} 
                       />

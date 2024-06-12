@@ -31,13 +31,26 @@
   color: $-c-sky !important;
 }
 
+// .deco {
+//   color: $-c-purple !important;
+//   a {
+//     font-size: 30px;
+//     color: $-c-purple !important;
+//     span {
+//       background: $-c-purple;
+//       color: $-c-beige;
+//       font-size: inherit;
+//     }
+//   }
+// }
 .deco {
-  color: $-c-purple !important;
+  color: #0A37A0 !important;
   a {
     font-size: 30px;
-    color: $-c-purple !important;
+    font-weight: 900;
+    color: #0A37A0 !important;
     span {
-      background: $-c-purple;
+      background: #0A37A0;
       color: $-c-beige;
       font-size: inherit;
     }

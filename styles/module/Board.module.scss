@@ -187,7 +187,7 @@
         display: block;
         width: 48px;
       }
-      .comment_form_rep_textarea {
+      .comment_form_textarea, .comment_form_rep_textarea {
         width: calc(100% - 48px);
         .comment_form_name {
           display: flex;
@@ -281,6 +281,16 @@
                 }
               }
             }
+          }
+        }
+      }
+      .comment_form_textarea {
+        width: 100%;
+        .comment_form_name {
+          display: flex;
+          flex-wrap: wrap;
+          > div {
+            width: 200px;
           }
         }
       }

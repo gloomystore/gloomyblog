@@ -90,6 +90,11 @@
             &:hover {
               transform: scale(1.5);
             }
+            &.no-hover {
+              &:hover {
+                transform: none;
+              }
+            }
           }
         }
         

@@ -47,8 +47,6 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
       }
     }
 
-    const commentsPageSize = 30
-    const offset = 0
     // 현재 글 가져오기
     const [documentRows] = await pool.query<RowDataPacket[]>(`
       SELECT blamed_count,
@@ -85,6 +83,23 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
       ...e,
       summary: removeTags(e.content).slice(0, 40),
     }))[0] // 현재 글의 첫 번째(유일한) 행 가져오기
+
+    const commentsPageSize = 30
+    const page = 1
+    const offset = (page - 1) * commentsPageSize
+
+    // comments를 가져옵니다.
+    // 전체 댓글 수를 가져오는 쿼리
+    const [totalCommentsResult] = await pool.query<RowDataPacket[]>(`
+      SELECT COUNT(*) AS totalComments
+      FROM xe_comments
+      WHERE document_srl = ${document_srl} AND status <> -1
+    `)
+
+    // comments의 페이지 수를 계산합니다.
+    const totalCommentsPages = Math.ceil(totalCommentsResult?.[0]?.totalComments/commentsPageSize)
+
+    const commentOffset = (totalCommentsPages - 1) * commentsPageSize
 
     // comments를 가져옵니다.
     // 댓글을 가져오는 쿼리
@@ -212,18 +227,12 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
   })
 
 
-    // 총 comments 수를 계산합니다.
-    const totalCommentsCount = commentsRows.length
-
-    // comments의 페이지 수를 계산합니다.
-    const totalCommentsPages = Math.ceil(totalCommentsCount / commentsPageSize)
-
     const commentsData = {
       content: comments,
       page: {
-        currentPage: 1,
+        currentPage: totalCommentsPages,
+        totalContents: totalCommentsResult?.[0]?.totalComments,
         totalPages: totalCommentsPages,
-        totalCount: totalCommentsCount,
       },
     }
 
@@ -339,11 +348,15 @@ export default function Document({
     setCommentPageRandomKey(Math.random())
   }, [hydrated, commentPageRandomKey, currentCommentPage])
 
+  const clickCommentPage = useCallback((page:number) => {
+    if(!commentTitleRef.current) return
+    changeCommentPage(page)
+    commentTitleRef.current.scrollIntoView()
+  }, [])
+
   const commentTitleRef = useRef<HTMLHeadingElement>(null)
   useEffect(() => {
-    if(!commentTitleRef.current || commentPageRandomKey === 0) return
     getCommentData(currentCommentPage)
-    commentTitleRef.current.scrollIntoView()
   }, [commentPageRandomKey, currentCommentPage])
   const getCommentData = useCallback(async(page:number) => {
     try {
@@ -527,6 +540,7 @@ export default function Document({
       if(res.status === 200 || res.status === 201) {
         console.log(res.data)
         changeCommentPage(1)
+        setCommentData(initialCommentData)
       } else throw new Error('network failed')
     } catch (err) {
       console.log(err)
@@ -715,9 +729,9 @@ export default function Document({
   return (
     <>
       <HeadComponent
-      title={documents.title}
-      description={documents.summary}
-      keywords={documents.tags}
+        title={documents.title}
+        description={documents.summary}
+        keywords={documents.tags}
       />
       
       <div className='gl-wrap'>
@@ -756,7 +770,7 @@ export default function Document({
               </div>
               <div className={styles['comment']} id='comment'>
                 <div className={styles['comment_inner']} id='comment_inner'>
-                  <h3 className={styles['comment_total']} ref={commentTitleRef}>댓글: <span id='comment_total_num'>{comments?.page?.totalCount}</span></h3>
+                  <h3 className={styles['comment_total']} ref={commentTitleRef}>댓글: <span id='comment_total_num'>{comments?.page?.totalContents}</span></h3>
                   <div className={styles['comment_list_wrapper']} id='comment_list_wrapper'>
                     {
                       [commentPageRandomKey === 0 ? comments?.content : commentsState?.content]?.[0]?.map((comment:any, idx:number) => (
@@ -964,7 +978,9 @@ export default function Document({
                                       className={styles['comment_form_text']} 
                                       cols={30} 
                                       rows={10} 
-                                      placeholder='댓글을 남겨주세요!' onChange={(e) => changeReplyTextValue(e.currentTarget.value)}
+                                      placeholder='댓글을 남겨주세요!' 
+                                      value={replyData.content}
+                                      onChange={(e) => changeReplyTextValue(e.currentTarget.value)}
                                     ></textarea>
                                     <div className={styles['comment_btns']}>
                                       <input 
@@ -995,7 +1011,7 @@ export default function Document({
                       type='button'
                       className='arrow_btn double first'
                       aria-label='arrow_btn_double_first'
-                      onClick={() => changeCommentPage(1)}
+                      onClick={() => clickCommentPage(1)}
                     >
                       <i className='fa fa-angle-double-left'></i>
                     </button>
@@ -1005,7 +1021,7 @@ export default function Document({
                       aria-label='arrow_btn_single_prev'
                       onClick={() => {
                         if(currentCommentPage > 1) {
-                          changeCommentPage(currentCommentPage - 1)
+                          clickCommentPage(currentCommentPage - 1)
                         }
                       }}
                       id='pageBoardLeft'
@@ -1019,7 +1035,7 @@ export default function Document({
                           type='button'
                           className={`paging_btn ${page === currentCommentPage && 'active'}`}
                           aria-label={`paging_btn_${page}`}
-                          onClick={() => changeCommentPage(page)}
+                          onClick={() => clickCommentPage(page)}
                         >
                           <i className='fa'>{page}</i>
                         </button>
@@ -1031,7 +1047,7 @@ export default function Document({
                       aria-label='arrow_btn_single_next'
                       onClick={() => {
                         if(currentCommentPage < comments.page.totalPages) {
-                          changeCommentPage(currentCommentPage + 1)
+                          clickCommentPage(currentCommentPage + 1)
                         }
                       }}
                       id='pageBoardRight'
@@ -1042,7 +1058,7 @@ export default function Document({
                       type='button'
                       className='arrow_btn double last'
                       aria-label='arrow_btn_double_last'
-                      onClick={() => changeCommentPage(comments.page.totalPages)}
+                      onClick={() => clickCommentPage(comments.page.totalPages)}
                       id='pageBoardRightDouble'
                     >
                       <i className='fa fa-angle-double-right'></i>
@@ -1050,7 +1066,7 @@ export default function Document({
                   </div>
                   <form name='comment_form' id='comment_form' className={styles['comment_form']} data-gtm-form-interact-id='0'>
                     {
-                      load && <div className={styles['comment_form_rep_textarea']}>
+                      load && <div className={styles['comment_form_textarea']}>
                       <div id='comment_form_name' className={styles['comment_form_name']}>
                         <div>
                           <input 
@@ -1075,9 +1091,6 @@ export default function Document({
                             onChange={(e) => setCommentPw(e.currentTarget.value)}
                           />
                         </div>
-                        {/* 스팸 방지문구 영역은 주석 처리합니다 */}
-                        <input type='hidden' name='document_srl' value='1027' readOnly={true} tabIndex={-1} className={styles['invisible']} />
-                        <input type='hidden' name='module_srl' value='52' readOnly={true} tabIndex={-1} className={styles['invisible']} />
                       </div>
                       <textarea 
                         name='comment_form_text' 
@@ -1085,6 +1098,7 @@ export default function Document({
                         cols={30} 
                         rows={10} 
                         placeholder='댓글을 남겨주세요!' 
+                        value={commentData.content}
                         onChange={(e) => changeCommentValue(e.currentTarget.value)}
                         required={true} 
                       />
@@ -1119,7 +1133,7 @@ export default function Document({
                 {
                   otherPost?.length > 0 &&otherPost?.map((item, idx) => (
                   <Link 
-                    href={`/board/${module_srl}/document/${item.document_srl}`} 
+                    href={`/board/${module_srl}/document/${item.document_srl}#title`} 
                     title={item.title} 
                     style={{backgroundImage: `url('/images/file/board/${item.document_srl}/thumb.jpg'), url('/images/flower6.webp')`}} className={`${document_srl === item.document_srl && styles['active']}`}
                     key={'otherPost' + idx}
