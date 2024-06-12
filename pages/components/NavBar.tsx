@@ -135,7 +135,7 @@ export default function NavBar() {
                 <Link href='https://www.gloomy-store.com' target='_blnk'>Portfolio</Link>
               </li>
               <li>
-                <Link href='/#liker_section'>I like it</Link>
+                <Link href='/comment/1'>방명록</Link>
               </li>
               {
                 !isLogin && <li className={styles['join']}>
@@ -179,7 +179,7 @@ export default function NavBar() {
                     <Link href='https://www.gloomy-store.com'>Portfolio</Link>
                   </li>
                   <li>
-                    <Link href='/#liker_section'>I like it</Link>
+                    <Link href='/comment/1'>방명록</Link>
                   </li>
                   {
                     !isLogin && <li className={styles['join']}>

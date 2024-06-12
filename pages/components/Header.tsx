@@ -54,7 +54,7 @@ export default function Header() {
             </li>
             <li className='active'>
               <Link
-                href='/board/52/page/1#title'
+                href='/board/52/page/1'
                 title='dev'
               >
                 <span className='t-purple'>d</span>ev
@@ -62,7 +62,7 @@ export default function Header() {
             </li>
             <li>
               <Link
-                href='/board/214/page/1#title'
+                href='/board/214/page/1'
                 title='dayz'
               >
                 d<span className='t-green'>a</span>yz

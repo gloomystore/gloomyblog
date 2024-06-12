@@ -27,7 +27,6 @@ type Props = {
 
 export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServerSidePropsContext<ParsedUrlQuery>) => {
   try {
-    // const { document_srl = '1', module_srl = '52' } = ctx.params || {}
     const document_srl = parseInt(ctx?.params?.document_srl as string)
     const module_srl = parseInt(ctx?.params?.module_srl as string)
 
