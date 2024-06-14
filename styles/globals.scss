@@ -12,6 +12,7 @@
 @import '@/styles/modal.scss';
 @import '@/styles/board.scss';
 @import '@/styles/rhymix.scss';
+@import '@/styles/form.scss';
 
 html {
   font-size: 16px;
@@ -41,7 +42,7 @@ input, textarea {
 }
 
 main {
-  min-height: calc(100vh - 480px);
+  // min-height: calc(100vh - 480px);
 }
 
 h1,h2,h3,h4,h5,h6,p,strong,b,u,em,i,a {line-height: 1.5;}
@@ -227,6 +228,7 @@ b, strong {
     margin: 0 3px;
   }
   .paging_btn {
+    line-height: 1;
     &.active {
       color: #555;
       background: #fff;

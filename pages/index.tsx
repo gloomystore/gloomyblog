@@ -20,6 +20,7 @@ import nextCookies from 'next-cookies'
 import jwt from 'jsonwebtoken'
 import { GetServerSidePropsContext } from 'next'
 import MiniProfileImage from './components/MiniProfile'
+import Image from 'next/image'
 
 export const getServerSideProps = async (ctx:GetServerSidePropsContext) => {
   try {
@@ -1018,7 +1019,6 @@ export default function Home({
                       changePage(currentPage - 1)
                     }
                   }}
-                  id='pageBoardLeft'
                 >
                   <i className='fa fa-angle-left'></i>
                 </button>
@@ -1044,7 +1044,6 @@ export default function Home({
                       changePage(currentPage + 1)
                     }
                   }}
-                  id='pageBoardRight'
                 >
                   <i className='fa fa-angle-right'></i>
                 </button>
@@ -1053,7 +1052,6 @@ export default function Home({
                   className='arrow_btn double last'
                   aria-label='arrow_btn_double_last'
                   onClick={() => changePage(Document.page.totalPages)}
-                  id='pageBoardRightDouble'
                 >
                   <i className='fa fa-angle-double-right'></i>
                 </button>
@@ -1064,8 +1062,8 @@ export default function Home({
       </div>
       <section className={styles['section-flower']}>
         <div className={styles['text-area']}>
-          <h4> I Can Do This </h4>
-          <h5 className={`${styles['h5']}`}>Web Development</h5>
+          <h2 className={`${styles['heading-1']}`}> I Can Do This </h2>
+          <h3 className={`${styles['heading-2']}`}>Web Development</h3>
           <p>이 블로그는 <span>개인서버</span>로 배포되고 있습니다.</p>
           <div className={styles['cans']}>
             <div className={styles['can']}><span></span>
@@ -1289,7 +1287,6 @@ export default function Home({
                       changeLikerPage(currentLikerPage - 1)
                     }
                   }}
-                  id='pageBoardLeft'
                 >
                   <i className='fa fa-angle-left'></i>
                 </button>
@@ -1315,7 +1312,6 @@ export default function Home({
                       changeLikerPage(currentLikerPage + 1)
                     }
                   }}
-                  id='pageBoardRight'
                 >
                   <i className='fa fa-angle-right'></i>
                 </button>
@@ -1324,25 +1320,31 @@ export default function Home({
                   className='arrow_btn double last'
                   aria-label='arrow_btn_double_last'
                   onClick={() => changeLikerPage(likers.page.totalPages)}
-                  id='pageBoardRightDouble'
                 >
                   <i className='fa fa-angle-double-right'></i>
                 </button>
               </div>
               <article className={styles['like_btns']}>
                 <button className={styles['like_btn']} id='like_btn' type='button' onClick={onLikeButton}>
-                  <img src='/images/icon/figma.png' alt='figma' />
+                  <Image 
+                    src='/images/icon/figma.png' 
+                    alt='figma' 
+                    width={50}
+                    height={50}
+                  />
                 </button>
                 <p>
                   <label htmlFor='like_btn' className={styles['like_btn_label']}>
                     나도 좋아요 누르기
                   </label>
-                  <img
+                  <Image
                     src='/images/icon/info.png'
                     className={styles['info']}
                     alt='회원가입을 하고 좋아요를 누를 수 있습니다'
                     title='회원가입을 하고 좋아요를 누를 수 있습니다'
                     onClick={() => alert('회원가입을 하고 좋아요를 누를 수 있습니다')}
+                    width={30}
+                    height={30}
                   />
                 </p>
               </article>
@@ -1385,14 +1387,14 @@ export default function Home({
                               </div>
                               <div className={stylesBoard['comment_text_wrap']}>
                                 <div className={stylesBoard['comment_name']}>
-                                  <a href='#!'>
+                                  <button title='프로필 메뉴'>
                                     <span>
                                       {
                                         comment.user_id === process.env.NEXT_PUBLIC_ADMIN_ID && <b className='black t-purple'>[운영자] </b>
                                       }  
                                     </span>
                                     {comment.user_name}
-                                  </a>
+                                  </button>
                                   <p>{moment(comment.regdate).format('YYYY-MM-DD HH:mm')}</p>
                                 </div>
                                 
@@ -1532,7 +1534,12 @@ export default function Home({
                               <div className={stylesBoard['rep-wrap']}>
                                 <form className={stylesBoard['comment_form_rep']}>
                                   <div className={stylesBoard['rep']}>
-                                    <img src='/images/icon/arrow-rep.png' alt='arrow' />
+                                    <Image 
+                                      src='/images/icon/arrow-rep.png' 
+                                      alt='arrow' 
+                                      width={48}
+                                      height={48}
+                                    />
                                   </div>
                                   <div className={stylesBoard['comment_form_rep_textarea']}>
                                     <div className={stylesBoard['comment_form_name']}>
@@ -1607,7 +1614,6 @@ export default function Home({
                           clickCommentPage(currentCommentPage - 1)
                         }
                       }}
-                      id='pageBoardLeft'
                     >
                       <i className='fa fa-angle-left'></i>
                     </button>
@@ -1633,7 +1639,6 @@ export default function Home({
                           clickCommentPage(currentCommentPage + 1)
                         }
                       }}
-                      id='pageBoardRight'
                     >
                       <i className='fa fa-angle-right'></i>
                     </button>
@@ -1642,7 +1647,6 @@ export default function Home({
                       className='arrow_btn double last'
                       aria-label='arrow_btn_double_last'
                       onClick={() => clickCommentPage(comments.page.totalPages)}
-                      id='pageBoardRightDouble'
                     >
                       <i className='fa fa-angle-double-right'></i>
                     </button>

@@ -15,7 +15,7 @@
     display: block;
     margin: auto;
     z-index: 1;
-    h4 {
+    .heading-1 {
       color: $-c-black;
       font-weight: 300;
       text-align: center;
@@ -23,7 +23,7 @@
       position: relative;
       z-index: 2;
     }
-    .h5 {
+    .heading-2 {
       font-weight: 200;
       line-height: 2.5;
       color: $-c-black;

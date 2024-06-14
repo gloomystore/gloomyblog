@@ -207,11 +207,12 @@
               visibility: hidden;
               right: 0;
               background: rgba(0, 0, 0, 0.7);
-              a {
+              a, button {
                 font-size: 13px;
                 width: 120px;
                 padding: 7px 10px;
                 display: inline-block;
+                text-align: left;
               }
             }
             &.opened {

@@ -19,6 +19,7 @@ import axios from 'axios'
 import moment from 'moment'
 import { LoadAtom, MyInfoAtom, ProfileModalActiveAtom, ProfileModalAtom } from '@/store/CommonAtom'
 import MiniProfileImage from '@/components/MiniProfile'
+import Image from 'next/image'
 
 type Props = {
   props : any
@@ -947,7 +948,12 @@ export default function Document({
                               <div className={styles['rep-wrap']}>
                                 <form className={styles['comment_form_rep']}>
                                   <div className={styles['rep']}>
-                                    <img src='/images/icon/arrow-rep.png' alt='arrow' />
+                                    <Image 
+                                      src='/images/icon/arrow-rep.png' 
+                                      alt='arrow' 
+                                      width={48}
+                                      height={48}
+                                    />
                                   </div>
                                   <div className={styles['comment_form_rep_textarea']}>
                                     <div className={styles['comment_form_name']}>
@@ -1023,7 +1029,6 @@ export default function Document({
                           clickCommentPage(currentCommentPage - 1)
                         }
                       }}
-                      id='pageBoardLeft'
                     >
                       <i className='fa fa-angle-left'></i>
                     </button>
@@ -1049,7 +1054,6 @@ export default function Document({
                           clickCommentPage(currentCommentPage + 1)
                         }
                       }}
-                      id='pageBoardRight'
                     >
                       <i className='fa fa-angle-right'></i>
                     </button>
@@ -1058,7 +1062,6 @@ export default function Document({
                       className='arrow_btn double last'
                       aria-label='arrow_btn_double_last'
                       onClick={() => clickCommentPage(comments.page.totalPages)}
-                      id='pageBoardRightDouble'
                     >
                       <i className='fa fa-angle-double-right'></i>
                     </button>

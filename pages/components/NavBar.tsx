@@ -8,6 +8,7 @@ import { IsAdminAtom, LoadAtom, MyInfoAtom, MyTokenAtom, ScrollBlockAtom } from 
 import Link from 'next/link'
 import { useRouter } from 'next/router';
 import Cookie from 'js-cookie'
+import Image from 'next/image';
 
 export default function NavBar() {
   // const router = useRouter()
@@ -49,13 +50,15 @@ export default function NavBar() {
 
   const [myInfo, setMyInfo] = useRecoilState(MyInfoAtom)
   const [myToken, setMyToken] = useRecoilState(MyTokenAtom)
-  const [isAdmin, setIsAdmin] = useRecoilState(IsAdminAtom)
+
   // isAdmin, myOnfo를 hydration 없이 csr로 적용
   const [isLogin, setIsLogin] = useState(false)
-  const [stateIsAdmin, setStatesAdmin] = useState(false)
+  const [isAdmin, setAdmin] = useState(false)
   useEffect(() => {
-    setStatesAdmin(isAdmin)
-  }, [isAdmin])
+    if(myInfo) {
+      setAdmin(myInfo.split('|')[1] === process.env.NEXT_PUBLIC_ADMIN_ID)
+    }
+  }, [myInfo])
   useEffect(() => {
     setIsLogin(!!myToken)
   }, [myToken])
@@ -100,7 +103,7 @@ export default function NavBar() {
   const logout = useCallback(() => {
     Cookie.remove('myInfo')
     Cookie.remove('accessToken')
-    setIsAdmin(false)
+    setAdmin(false)
     setMyInfo(null)
     setMyToken(null)
 
@@ -120,8 +123,20 @@ export default function NavBar() {
               <Link href='/' title='홈페이지로 이동' className={` img-box`}>
                 {/* <Image src={require('/public/images/logo2.png')} alt='logo' className='onlyPC' />
                 <Image src={require('/public/images/logo3.png')} alt='logo' className='onlySP' /> */}
-                <img src='/images/logo2.png' alt='logo' className='onlyPC' />
-                <img src='/images/logo3.png' alt='logo' className='onlySP' />
+                <Image 
+                  src='/images/logo2.png' 
+                  alt='logo' 
+                  className='onlyPC' 
+                  width={200}
+                  height={33}
+                />
+                <Image 
+                  src='/images/logo3.png' 
+                  alt='logo' 
+                  className='onlySP' 
+                  width={40}
+                  height={36}
+                />
               </Link>
             </h2>
             <ul className={`${styles['nav-list']} onlyPC`}>
@@ -148,14 +163,19 @@ export default function NavBar() {
               {
                 isLogin && <li className={`${styles['login']} ${isSubmenu && styles['opened']}`}>
                 <button className={styles['profile']} onClick={handleSubmenu}>
-                <img src={`/images/file/members/${myInfo?.split('|')[1]}/profile.webp`} alt='profile' />
+                <Image 
+                  src={`/images/file/members/${myInfo?.split('|')[1]}/profile.webp`} 
+                  alt='profile' 
+                  width={36}
+                  height={36}
+                />
                 </button>
                 <div className={styles['submenu']}>
                   <Link href=':'>회원정보 변경</Link>
                   <Link href=':'>쪽지함</Link>
                   <button onClick={logout}>로그아웃</button>
                   {
-                    stateIsAdmin && <Link href=':'>글쓰기</Link>
+                    isAdmin && <Link href='/write'>글쓰기</Link>
                   }
                 </div>
               </li>
@@ -170,16 +190,16 @@ export default function NavBar() {
               <article className={navActive ? `${styles['nav-menu']} ${styles['active']}` : `${styles['nav-menu']}`}>
                 <ul className={`${styles['nav-list-mobile']}`}>
                   <li>
-                    <Link href='/board/52/page/1#title'>개발일지</Link>
+                    <Link href='/board/52/page/1#title' onClick={() => setNavActive(false)}>개발일지</Link>
                   </li>
                   <li>
-                    <Link href='/board/214/page/1#title'>일상</Link>
+                    <Link href='/board/214/page/1#title' onClick={() => setNavActive(false)}>일상</Link>
                   </li>
                   <li>
-                    <Link href='https://www.gloomy-store.com'>Portfolio</Link>
+                    <Link href='https://www.gloomy-store.com' target='_blank' onClick={() => setNavActive(false)}>Portfolio</Link>
                   </li>
                   <li>
-                    <Link href='/comment/1'>방명록</Link>
+                    <Link href='/comment/1' onClick={() => setNavActive(false)}>방명록</Link>
                   </li>
                   {
                     !isLogin && <li className={styles['join']}>
@@ -192,14 +212,19 @@ export default function NavBar() {
                   {
                     isLogin && <li className={`${styles['login']} ${isSubmenu && styles['opened']}`}>
                     <button className={styles['profile']} onClick={handleSubmenu}>
-                      <img src={`/images/file/members/${myInfo?.split('|')[1]}/mini.webp`} alt='profile' />
+                      <Image 
+                        src={`/images/file/members/${myInfo?.split('|')[1]}/profile.webp`} 
+                        alt='profile' 
+                        width={36}
+                        height={36}
+                      />
                     </button>
                     <div className={styles['submenu']}>
                       <Link href=':'>회원정보 변경</Link>
                       <Link href=':'>쪽지함</Link>
                       <button onClick={logout}>로그아웃</button>
                       {
-                        stateIsAdmin && <Link href=':'>글쓰기</Link>
+                        isAdmin && <Link href='/write'>글쓰기</Link>
                       }
                     </div>
                   </li>

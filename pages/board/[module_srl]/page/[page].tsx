@@ -305,7 +305,7 @@ export default function Board({
             <>
               <h3>
                 <span className={styles['logo-company']}>
-                  <img src='/images/logo/ico_trans.webp' alt='icon' />
+                  {/* <img src='/images/logo/ico_trans.webp' alt='icon' /> */}
                 </span>
                 트랜스코스모스코리아
               </h3>

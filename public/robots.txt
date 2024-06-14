@@ -2,4 +2,8 @@ User-agent: *
 Allow: /
 User-agent: Yeti
 Allow: /
-Sitemap: https://www.gloomy-store.com/sitemap.xml
+User-agent: *
+Disallow: /write/
+User-agent: *
+Disallow: /api/
+Sitemap: https://blog.gloomy-store.com/sitemap.xml

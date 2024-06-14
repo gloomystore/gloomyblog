@@ -1,0 +1,36 @@
+@import './var.scss';
+.select {
+  display: inline-block;
+  width: 200px;
+  padding: 5px 8px 8px;
+  font-size: 20px;
+  line-height: 1;
+}
+.textarea {
+
+}
+.input {
+  &[type='text'], &[type='password'], &[type='tel'], &[type='number'] {
+    display: inline-block;
+    width: 200px;
+    padding: 5px 8px 8px;
+    font-size: 20px;
+    line-height: 1;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

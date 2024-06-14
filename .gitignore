@@ -43,3 +43,6 @@ next-env.d.ts
 middleware.ts
 public/getIp.php
 .svn
+
+pages/write
+pages/write/*

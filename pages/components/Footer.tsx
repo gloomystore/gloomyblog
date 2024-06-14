@@ -1,18 +1,21 @@
 import styles from '@/styles/module/Footer.module.scss'
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { Visitor, Visitor2 } from '@/type/index';
-import { getDates } from '@/utils/common';
-import axios from 'axios';
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { Visitor, Visitor2 } from '@/type/index'
+import { getDates } from '@/utils/common'
+import axios from 'axios'
 import API from '@/api/index'
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/router'
+import Image from 'next/image'
+import { useRecoilState } from 'recoil'
+import { TodayHitAtom, TotalHitAtom } from '@/store/StatisticsAtom'
 
 export default function Footer({statistics}:any) {
   const [isLoadIp, setIsLoadIp] = useState(false)
   const [ipaddr, setIpaddr] = useState(0)
-  const [todayHit, setTodayHit] = useState(0)
-  const [totalHit, setTotalHit] = useState(0)
-  const [todayDate, yesterdayDate,fullDateTime] = getDates();
+  const [todayHit, setTodayHit] = useRecoilState(TodayHitAtom)
+  const [totalHit, setTotalHit] = useRecoilState(TotalHitAtom)
+  const [todayDate, yesterdayDate,fullDateTime] = getDates()
   useEffect(() => {
     const getIp = async() => {
       try {
@@ -40,16 +43,16 @@ export default function Footer({statistics}:any) {
           IPADDRESS: ipaddr,
         }
         console.log(data)
-        const res = await axios.post<(Visitor | Visitor2)[]>(`/api/updateVisitor`,data)
+        const res = await axios.post<(Visitor | Visitor2)[]>(`/api/updateVisitor`, data)
         // console.log(res.data)
-        const [todayObj, totalObj] = res.data;
+        const [todayObj, totalObj] = res.data
         if ("TODAY" in todayObj) {
-          const todayData = todayObj as Visitor;
-          setTodayHit(todayData.TODAY);
+          const todayData = todayObj as Visitor
+          setTodayHit(todayData.TODAY)
         }
         if ("TOTAL" in totalObj) {
-          const totalData = totalObj as Visitor2;
-          setTotalHit(totalData.TOTAL);
+          const totalData = totalObj as Visitor2
+          setTotalHit(totalData.TOTAL)
         }
       } catch(err) {
         console.log(err)
@@ -69,12 +72,12 @@ export default function Footer({statistics}:any) {
     <div className={`${styles["footer-inner"]}`}>
       <article className={`${styles["footer-logo"]}`}>
         <Link className="img-box" href="/">
-            <img src={'/images/logo2.png'} alt='logo' className='onlyPC' width={242} height={33} />
-            <img src={'/images/logo3.png'} alt='logo' className='onlySP' width={70} height={63} />
+            <Image src={'/images/logo2.png'} alt='logo' className='onlyPC' width={160} height={22} />
+            <Image src={'/images/logo3.png'} alt='logo' className='onlySP' width={55} height={49} />
         </Link>
       </article>
       <article className={`${styles["footer-desc"]}`}>
-        <h5>글루미스토어 <em><span>today: {todayHit}</span><span>total: {totalHit}</span></em></h5>
+        <h2>글루미스토어 <em><span>today: {todayHit}</span><span>total: {totalHit}</span></em></h2>
         <p><a href="tel:01043431354">TEL : 010-4343-1354</a></p>
         <p><a href="mailto:serenity90s@naver.com">EMAIL : serenity90s@naver.com</a></p>
         <p>COPYRIGHT © 2019 YOUNG e Design CO., LTD. All Rights Reserved. Designed by YOUNG e Design</p>
