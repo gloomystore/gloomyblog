@@ -9,7 +9,9 @@ export default function App({ Component, pageProps }: AppProps) {
       <AuthChecker />
       <ProfileModal />
       <NavBar />
-      <Component {...pageProps} />
+      <AppLayout>
+        <Component {...pageProps} />
+      </AppLayout>
       <Footer />
     </RecoidContextProvider>
 }
@@ -21,6 +23,7 @@ import axios from "axios";
 import { useRouter } from "next/router";
 import ProfileModal from "./components/ProfileModal";
 import Cookies from 'js-cookie'
+import AppLayout from "./AppLayout";
 
 const AuthChecker = () => {
   const router = useRouter()

@@ -1,3 +1,4 @@
+
 // style
 import styles from '@/styles/module/Board.module.scss'
 
@@ -5,11 +6,11 @@ import styles from '@/styles/module/Board.module.scss'
 import HeadComponent from '@/pages/components/HeadComponent'
 
 import Header from '@/pages/components/Header'
-import { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult, GetStaticProps, GetStaticPropsContext, GetStaticPropsResult } from 'next'
+import { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult } from 'next'
 import { ParsedUrlQuery } from 'querystring'
 import pool from '@/pages/api/db/mysql'
 import { RowDataPacket } from 'mysql2'
-import { removeTags, removeTagsExceptCode } from '@/utils/common'
+import { removeTags } from '@/utils/common'
 import Link from 'next/link'
 import nextCookies from 'next-cookies'
 import jwt from 'jsonwebtoken'
@@ -20,6 +21,7 @@ import moment from 'moment'
 import { LoadAtom, MyInfoAtom, ProfileModalActiveAtom, ProfileModalAtom } from '@/store/CommonAtom'
 import MiniProfileImage from '@/components/MiniProfile'
 import Image from 'next/image'
+import { useRouter } from 'next/router'
 
 type Props = {
   props : any
@@ -81,7 +83,8 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
 
     const row:any = documentRows.map(e => ({
       ...e,
-      summary: removeTags(e.content).slice(0, 40),
+      summary: removeTags(e.content).slice(0, 100),
+      tags: JSON.parse(e.tags)
     }))[0] // 현재 글의 첫 번째(유일한) 행 가져오기
 
     const commentsPageSize = 30
@@ -254,7 +257,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
 
     const beforePosts = beforeRows.map(row => ({
       ...row,
-      summary: removeTags(row.content).length > 40 ? removeTags(row.content).substring(0, 40) + '...' : removeTags(row.content),
+      summary: removeTags(row.content).length > 100 ? removeTags(row.content).substring(0, 100) + '...' : removeTags(row.content),
       content: '',
     }))
 
@@ -269,7 +272,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
 
     const afterPosts = afterRows.map(row => ({
       ...row,
-      summary: removeTags(row.content).length > 40 ? removeTags(row.content).substring(0, 40) + '...' : removeTags(row.content),
+      summary: removeTags(row.content).length > 100 ? removeTags(row.content).substring(0, 100) + '...' : removeTags(row.content),
       content: '',
     }))
 
@@ -313,6 +316,7 @@ export default function Document({
   document_srl = 0,
   module_srl = -1,
 }:{documents: any, otherPost: any[], comments: any, document_srl: any, module_srl: any}) {
+  console.log(documents)
   const [myInfo, setMyInfo]:[(string | null), Function] = useRecoilState(MyInfoAtom)
   const [load, setLoad] = useRecoilState(LoadAtom)
   const [hydrated, setHydrated] = useState(false)
@@ -723,15 +727,15 @@ export default function Document({
     }
   }, [profileModal, profileModalActive])
 
-
-
+  const router = useRouter()
 
   return (
     <>
       <HeadComponent
-        title={documents.title}
+        title={'글루미스토어' + documents.title}
         description={documents.summary}
-        keywords={documents.tags}
+        keywords={`${documents.tags.length ? documents.tags.join(', ') : ''} ${documents?.title?.replace(/\s/gi, ', ')} ${documents?.summary?.replace(/\s/gi, ', ')}`}
+        canonical={process.env.NEXT_PUBLIC_API_URL + router.asPath}
       />
       
       <div className='gl-wrap'>
@@ -801,14 +805,14 @@ export default function Document({
                               </div>
                               <div className={styles['comment_text_wrap']}>
                                 <div className={styles['comment_name']}>
-                                  <a href='#!'>
+                                  <button type='button'>
                                     <span>
                                       {
                                         comment.user_id === process.env.NEXT_PUBLIC_ADMIN_ID && <b className='black t-purple'>[운영자] </b>
                                       }  
                                     </span>
                                     {comment.user_name}
-                                  </a>
+                                  </button>
                                   <p>{moment(comment.regdate).format('YYYY-MM-DD HH:mm')}</p>
                                 </div>
                                 
@@ -858,6 +862,7 @@ export default function Document({
                                           myInfo &&
                                           (myInfo as string).split('|')[1] === comment.user_id && 
                                           editingComment.active &&
+                                          editingComment.comment_srl === comment.comment_srl &&
                                           <p>
                                             <button 
                                               type='button' 
@@ -983,7 +988,7 @@ export default function Document({
                                       className={styles['comment_form_text']} 
                                       cols={30} 
                                       rows={10} 
-                                      placeholder='댓글을 남겨주세요!' 
+                                      placeholder='답글을 남겨주세요!' 
                                       value={replyData.content}
                                       onChange={(e) => changeReplyTextValue(e.currentTarget.value)}
                                     ></textarea>
@@ -1126,7 +1131,7 @@ export default function Document({
               </div>
  
               <div className={styles['toList_wrap']}>
-                <button type='button' onClick={() => {}} className={styles['toList']}>목록으로</button>
+                <Link href={`/board/${module_srl}/page/1`} className={styles['toList']}>목록으로</Link>
               </div>
             </div>
             <div className={styles['another_content']}>

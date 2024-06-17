@@ -18,6 +18,7 @@ import { removeTags, removeTagsExceptCode } from '@/utils/common';
 import Link from 'next/link';
 import nextCookies from 'next-cookies'
 import jwt from 'jsonwebtoken'
+import { useRouter } from 'next/router';
 
 type Props = {
   props : {
@@ -117,7 +118,6 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
             currentPage: 0,
             totalPages: 0,
           },
-          module_srl: 0,
         },
         module_srl: 0,
       }
@@ -153,13 +153,27 @@ export default function Board({
     }
   }
 
+  const router = useRouter()
+
   return (
     <>
-      <HeadComponent
-        title={'글루미스토어 - 프론트엔드 개발자 영 블로그'}
-        description={'프론트엔드 개발자 영의 블로그입니다. 이 웹사이트의 모든 동작은 state binding으로 구현되어있습니다. 또한 이 웹사이트는 Next.js로 구현되어있습니다.'}
-        keywords={'글루미스토어, 퍼블리셔, 프론트엔드, 개발자, FE, 웹퍼블리셔, HTML5, CSS3, ES6, Jquery, PHP, Photoshop'}
-      />
+      {
+        module_srl === 52 && <HeadComponent
+          title={`글루미스토어 게시판 - 개발일기 Development`}
+          description={'글루미 스토어 개발 일기입니다. 프론트엔드 개발과 관련된 내용이 쓰여져 있어요. 유익할 것입니다.'}
+          keywords={`글루미스토어, 프론트엔드, 개발자, 개발, 개발일기, development, frontend, blog, ${documents.data.map((e:any) => e.title).join(', ')}`}
+          canonical={process.env.NEXT_PUBLIC_API_URL + router.asPath}
+        />
+      }
+      {
+        module_srl === 214 && <HeadComponent
+          title={`글루미스토어 게시판 - 일상 이야기`}
+          description={'글루미 스토어 일상 일기입니다. Daily Post입니다. 개발자의 개발 외 일상 이야기가 남겨져있습니다.'}
+          keywords={`글루미스토어, 프론트엔드, 개발자, 개발, 일상,daily, blog, ${documents.data.map((e:any) => e.title).join(', ')}`}
+          canonical={process.env.NEXT_PUBLIC_API_URL + router.asPath}
+        />
+      }
+      
       {isLoad && <Loading
         isLoad={isLoad}
         isContentLoad={isContentLoad}

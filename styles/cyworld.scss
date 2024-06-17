@@ -4,10 +4,13 @@
   width: 100%;
   min-width: 360px;
   margin: auto;
-  margin-top: 150px;
+  margin-top: 90px;
   margin-bottom: 150px;
   padding: 25px 0;
   overflow-x: hidden;
+  &.gl-comment {
+    margin-top: 90px;
+  }
   filter: drop-shadow(2px 4px 6px $-c-black);
   .gl-wrap__inner {
     position: relative;
@@ -141,8 +144,39 @@
           border-bottom: 2px dotted gray;
           margin-top: 20px;
           margin-bottom: 20px;
+          h2 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3px 18px;
+            border-radius: 4px;
+            border: 2px solid lightgray;
+            margin-top: 5px;
+            .today-is {
+              color: #0790e0;
+              font-weight: 900;
+              font-size: 12px;
+            }
+            > div {
+              display: flex;
+              align-items: center;
+              .icon {
+                width: 20px;
+                display: inline-flex;
+                align-items: center;
+              }
+              .word {
+                font-size: 14px;
+                padding-left: 6px;
+              }
+            }
+          }
           p {
             white-space: pre-line;
+            margin: 5px auto 0;
+            font-size: 15px;
+            height: 150px;
+            overflow-y: scroll;
           }
         }
       }
@@ -159,9 +193,14 @@
         cursor: pointer;
       }
       .box {
-        max-height: calc(100vh - 300px);
+        max-height: calc(100vh - 352px);
+        min-height: 500px;
         overflow: scroll;
-        overscroll-behavior: auto;
+        overscroll-behavior: none;
+        scroll-behavior: smooth;
+        @media(max-width: $breakPoint) {
+          overscroll-behavior: auto;
+        }
         .comment-create-area {
           background: #eeeeee;
           padding: 12px 10px 3px;
@@ -173,10 +212,55 @@
             justify-content: space-between;
             .minimi {
               width: 150px;
+              height: 150px;
               border: 1px solid #eee;
+              &.no-member {
+                position: relative;
+                img {
+                  filter: brightness(0.5);
+                }
+                .no-member-form {
+                  position: absolute;
+                  width: 150px;
+                  height: 150px;
+                  top: 0;
+                  left: 0;
+                  display: flex;
+                  flex-wrap: wrap;
+                  justify-content: center;
+                  align-content: space-around;
+                  @media(max-width: $breakPoint) {
+                    width: 120px;
+                    height: 120px;
+                  }
+                  > div {
+                    text-align: center;
+                    input {
+                      display: inline-block;
+                      width: calc(100% - 10px);
+                      margin: auto;
+                    }
+                  }
+                }
+              }
+              img {
+                width: 148px;
+                height: 148px;
+              }
+              @media(max-width: $breakPoint) {
+                width: 120px;
+                height: 120px;
+                img {
+                  width: 118px;
+                  height: 118px;
+                }
+              }
             }
             .create-text {
               width: calc(100% - 170px);
+              @media(max-width: $breakPoint) {
+                width: calc(100% - 140px);
+              }
               textarea {
                 width: 100%;
                 max-width: 100%;
@@ -199,6 +283,11 @@
               background: #fff;
               border: 1px solid gray;
             }
+             div {
+              .submit-button {
+                margin-left: 10px;
+              }
+             }
           }
         }
         .comment-list-area {
@@ -213,7 +302,8 @@
               padding: 3px 10px 4px;
               position: relative;
               &.is-secret {
-                background: #f9bf8d;
+                background: #fff1d7;
+                border-top: 2px solid #d3bfa4;
               }
               > div {
                 font-size: 10px;
@@ -222,7 +312,7 @@
                 display: flex;
                 justify-content: flex-start;
                 align-items: center;
-                > span, a {
+                > span, > a, > button {
                   padding: 0 3px;
                   display: flex;
                   align-items: center;
@@ -234,11 +324,13 @@
                 }
                 .comment-title-name {
                   font-size: 13px;
-                  color: #004dd2;
+                  &.is-button {
+                    color: #004dd2;
+                  }
                 }
                 .home-icon {
                   // display: inline-block;
-                  width: 18px;
+                  width: 20px;
                   height: 18px;
                 }
                 .comment-edit {
@@ -246,6 +338,7 @@
 
                   }
                   .super-delete-button {
+                    text-align: right;
                     position: absolute;
                     width: 100px;
                     right: 0;
@@ -286,18 +379,23 @@
               }
               p {
                 .is-secret-comment {
-                  padding-left: 20px;
+                  padding-left: 15px;
                   position: relative;
                   display: block;
                   font-size: 10px;
+                  color: #c6a24a;
+                  > b {
+                    color: #ab793c;
+                  }
                   &::before {
                     content: '';
                     position: absolute;
                     left: 0;
-                    width: 18px;
-                    height: 18px;
+                    width: 12px;
+                    height: 13px;
                     z-index: 1;
-                    background: url('/images/file/members/default-user2.webp');
+                    background: url('/images/icon/lock.webp');
+                    background-size: cover;
                   }
                 }
               }
@@ -310,18 +408,20 @@
             background: #eee;
             padding: 2px 10px;
             &.comment-rep-first {
-              padding: 15px 10px 2px;
+              padding: 7px 10px 2px;
             }
             &.comment-rep-last {
               padding: 2px 10px 15px;
             }
             &.comment-rep-first.comment-rep-last {
-              padding: 15px 10px;
+              padding: 6px 10px 8px;
             }
             > p {
+              line-height: 24px;
               > span, > button {
                 display: inline-block;
                 font-size: 10px;
+                line-height: 24px;
               }
               .rep-name {
                 font-size: 12px;
@@ -329,34 +429,83 @@
                   color: #004dd2;
                 }
               }
-              button {
+              .edit_area {
+                height: 24px;
+                vertical-align: middle;
+                font-size: 12px;
+                resize: none;
+              }
+              .rep-edit, .rep-delete {
+                margin-left: 3px;
                 width: 12px;
+              }
+              button:not(:first-of-type) {
+                
+              }
+              .rep-edit-cancel {
+                width: 20px;
+              }
+              .rep-edit-complete {
+                width: 42px;
               }
             }
           }
           .comment-rep-create {
             display: flex;
             flex-wrap: wrap;
+            background: #eee;
+            padding: 8px 7px;
+            align-items: center;
             textarea {
-              width: calc(100% - 120px);
+              width: calc(100% - 70px);
               resize: none;
+              height: 50px;
+              border: 1px solid lightgray;
             }
-            button {
-              width: 100px;
-              margin-left: 20px;
+            .submit-box {
+              display: flex;
+              flex-wrap: wrap;
+              width: 68px;
+              > div {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                label {
+                  font-size: 12px;
+                }
+              }
+              
+              button {
+                width: 40px;
+                height: 27px;
+                margin: 5px 10px 0px 10px;
+                font-size: 14px;
+                padding: 2px 4px 3px;
+                border-radius: 3px;
+                background: #fff;
+                border: 1px solid gray;
+              }
             }
             &.not-memeber {
               textarea {
-                width: calc(100% - 270px);
+                width: calc(100% - 180px);
+                margin-left: 10px;
               }
               button {
                 width: 100px;
                 margin-left: 20px;
               }
               .info-area {
-                width: 150px;
+                width: 100px;
+                @media(max-width: $breakPoint) {
+                  width: 50px;
+                }
                 input {
                   width: 100%;
+                  border: 1px solid lightgray;
+                  &:nth-of-type(2) {
+                    margin-top: 4px;
+                  }
                 }
               }
             }

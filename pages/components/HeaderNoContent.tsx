@@ -37,15 +37,23 @@ export default function HeaderNoContent() {
       <aside className={styles['gl-nav-side']}>
         <div className='d-flex justify-between'>
           <ul>
+            <li className='active'>
+              <Link
+                href='/'
+                title='home page'
+              >
+                <span className='t-purple'>H</span>ome
+              </Link>
+            </li>
             <li>
-              <a
+              <Link
                 href='#!'
                 title='profile'
                 className='blinkRed'
                 onClick={() => alert('준비중입니다.')}
               >
                 pr<span className='t-red'>o</span>file
-              </a>
+              </Link>
             </li>
             <li className='active'>
               <Link

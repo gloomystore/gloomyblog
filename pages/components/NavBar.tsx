@@ -71,6 +71,7 @@ export default function NavBar() {
   // 페이지가 변경되면 모바일 nav메뉴가 닫힘
   const router = useRouter()
   useEffect(() => {
+    console.log('router.pathname', router.pathname)
     setNavActive(false)
     setScrollStyle(``)
   }, [router.pathname])
@@ -103,12 +104,12 @@ export default function NavBar() {
   const logout = useCallback(() => {
     Cookie.remove('myInfo')
     Cookie.remove('accessToken')
-    setAdmin(false)
     setMyInfo(null)
     setMyToken(null)
 
     // nav 닫기
     setNavActive(false)
+    router.reload()
   }, [myInfo, isAdmin])
 
   return (
@@ -196,7 +197,7 @@ export default function NavBar() {
                     <Link href='/board/214/page/1#title' onClick={() => setNavActive(false)}>일상</Link>
                   </li>
                   <li>
-                    <Link href='https://www.gloomy-store.com' target='_blank' onClick={() => setNavActive(false)}>Portfolio</Link>
+                    <Link href='https://www.gloomy-store.com' target='_blank' rel='noopener' onClick={() => setNavActive(false)}>Portfolio</Link>
                   </li>
                   <li>
                     <Link href='/comment/1' onClick={() => setNavActive(false)}>방명록</Link>

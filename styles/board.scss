@@ -63,15 +63,15 @@
 
 .toList_wrap {
   text-align: right;
-}
-.toList_wrap button {
-  border: none;
-  font-size: 15px;
-  padding: 7px 17px;
-  border-radius: 5px;
-  color: white;
-  cursor: pointer;
-  margin-top: 40px;
+  a, button {
+    border: none;
+    font-size: 15px;
+    padding: 7px 17px;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    margin-top: 40px;
+  }
 }
 
 .toList {

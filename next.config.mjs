@@ -1,12 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  ...(process.env.NODE_ENV === 'production' && {
-    compiler: {
-      removeConsole: {
-        exclude: ['error', 'warn'],
-      },
-    },
-  }),
+  swcMinify: true,
   async headers() {
     return [
       // {
@@ -21,5 +15,13 @@ const nextConfig = {
     ];
   },
 };
+
+if (process.env.NODE_ENV === 'production') {
+  nextConfig.compiler = {
+    removeConsole: {
+      exclude: ['error', 'warn'],
+    },
+  };
+}
 
 export default nextConfig;

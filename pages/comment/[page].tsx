@@ -5,7 +5,6 @@ import { RowDataPacket } from 'mysql2'
 import { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult } from 'next'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { Props } from 'next/script'
 import { ParsedUrlQuery } from 'querystring'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import pool from '../api/db/mysql'
@@ -18,22 +17,35 @@ import { useRecoilState } from 'recoil'
 import Image from 'next/image'
 import { TodayHitAtom, TotalHitAtom } from '@/store/StatisticsAtom'
 
-export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServerSidePropsContext<ParsedUrlQuery>) => {
+
+
+interface Props {
+  comments: any
+}
+interface Props {
+  comments: any;
+}
+
+export const getServerSideProps: GetServerSideProps<Props> = async (
+  ctx: GetServerSidePropsContext<ParsedUrlQuery>
+) => {
   try {
-    const page = parseInt(ctx?.params?.page as string)
+    const page = parseInt(ctx?.params?.page as string) || 1
     const document_srl = 201
-    const module_srl = 0
     const cookies = nextCookies(ctx)
     const token = cookies.accessToken
     let isAdmin = false
     let myInfo = null
+    let cookieUserId = null
+
     if (token) {
       try {
         const secret = process.env.NEXT_PUBLIC_JWT_SECRET ?? ''
-        const decoded = jwt.verify(token, secret)
+        const decoded = jwt.verify(token, secret) as any
         const cookieMyInfo = cookies.myInfo ?? null
         myInfo = cookieMyInfo ? atob(atob(cookieMyInfo)) : null // 디코딩된 사용자 정보
         isAdmin = myInfo?.split('|')[1] === process.env.NEXT_PUBLIC_ADMIN_ID
+        cookieUserId = myInfo?.split('|')[1] as string
       } catch (error) {
         console.error('JWT 검증 실패:', error)
       }
@@ -42,22 +54,43 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
     const commentsPageSize = 30
     const offset = (page - 1) * commentsPageSize
 
-    // comments를 가져옵니다.
-    // 전체 댓글 수를 가져오는 쿼리
-    const [totalCommentsResult] = await pool.query<RowDataPacket[]>(`
-      SELECT COUNT(*) AS totalComments
+    // 최상위 댓글을 가져오는 쿼리
+    const [topCommentsRows] = await pool.query<RowDataPacket[]>(`
+      SELECT
+        comment_srl,
+        module_srl,
+        document_srl,
+        parent_srl,
+        is_secret,
+        content,
+        voted_count,
+        blamed_count,
+        notify_message,
+        password,
+        user_id,
+        user_name,
+        member_srl,
+        email_address,
+        homepage,
+        uploaded_count,
+        regdate,
+        last_update,
+        ipaddress,
+        list_order,
+        status
       FROM xe_comments
-      WHERE document_srl = ${document_srl} AND status <> -1
+      WHERE document_srl = ${document_srl} AND parent_srl = 0 AND status <> -1
+      ORDER BY regdate DESC
+      LIMIT ${commentsPageSize} OFFSET ${offset}
     `)
 
-    // comments의 페이지 수를 계산합니다.
-    const totalCommentsPages = Math.ceil(totalCommentsResult?.[0]?.totalComments / commentsPageSize)
+    // 최상위 댓글의 SRLs 추출
+    const topCommentsSrls = topCommentsRows.map(comment => comment.comment_srl).join(',')
 
-    // comments를 가져옵니다.
-    // 댓글을 가져오는 쿼리
-    const [commentsRows] = await pool.query<RowDataPacket[]>(`
-      WITH RECURSIVE CommentTree AS (
-        -- 최상위 댓글을 가져옵니다.
+    let repliesRows: RowDataPacket[] = []
+    if (topCommentsSrls) {
+      // 최상위 댓글의 답글을 가져오는 쿼리
+      const [repliesResult] = await pool.query<RowDataPacket[]>(`
         SELECT
           comment_srl,
           module_srl,
@@ -79,121 +112,61 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
           last_update,
           ipaddress,
           list_order,
-          status,
-          0 AS depth, -- depth 0은 최상위 댓글
-          comment_srl AS top_comment_srl -- 최상위 댓글의 comment_srl
+          status
         FROM xe_comments
-        WHERE document_srl = ${document_srl} AND parent_srl = 0 AND status <> -1
-        
-        UNION ALL
-        
-        -- 답글들을 가져옵니다.
-        SELECT
-          c.comment_srl,
-          c.module_srl,
-          c.document_srl,
-          c.parent_srl,
-          c.is_secret,
-          c.content,
-          c.voted_count,
-          c.blamed_count,
-          c.notify_message,
-          c.password,
-          c.user_id,
-          c.user_name,
-          c.member_srl,
-          c.email_address,
-          c.homepage,
-          c.uploaded_count,
-          c.regdate,
-          c.last_update,
-          c.ipaddress,
-          c.list_order,
-          c.status,
-          ct.depth + 1 AS depth, -- depth는 부모의 depth + 1
-          ct.top_comment_srl -- 최상위 댓글의 comment_srl을 유지합니다.
-        FROM xe_comments c
-        INNER JOIN CommentTree ct ON c.parent_srl = ct.comment_srl -- 상위 댓글과 연결
-        WHERE c.status <> -1 -- 재귀적으로 가져오는 부분에 status 조건 추가
-      )
-      
-      -- 최종적으로 페이징 처리 및 정렬
-      SELECT
-        *
-      FROM (
-        SELECT
-          *,
-          ROW_NUMBER() OVER (PARTITION BY top_comment_srl ORDER BY depth, regdate) AS row_num -- 각 최상위 댓글 그룹 내에서 순번을 매깁니다.
-        FROM CommentTree
-      ) sub
-      ORDER BY top_comment_srl DESC, -- 최상위 댓글을 최신 순으로 정렬
-               CASE WHEN depth = 0 THEN regdate END DESC, -- 최상위 댓글은 최신 순으로 정렬
-               CASE WHEN depth > 0 THEN regdate END -- 답글은 예전 순으로 정렬
-      LIMIT ${commentsPageSize} OFFSET ${offset}
+        WHERE document_srl = ${document_srl} AND parent_srl IN (${topCommentsSrls}) AND status <> -1
+        ORDER BY regdate ASC
+      `)
+      repliesRows = repliesResult
+    }
+
+    // 최상위 댓글과 답글을 하나의 배열로 통합하여 정렬
+    const allComments = topCommentsRows.reduce((acc: any[], comment: any) => {
+      // 최상위 댓글 추가
+      acc.push({
+        ...comment,
+        content: handleCommentContent(comment, isAdmin, cookieUserId),
+      })
+
+      // 해당 최상위 댓글의 답글을 추가
+      const replies = repliesRows.filter(reply => reply.parent_srl === comment.comment_srl)
+      replies.forEach(reply => {
+        acc.push({
+          ...reply,
+          content: handleCommentContent(reply, isAdmin, cookieUserId),
+        })
+      })
+
+      return acc
+    }, [])
+
+    // 전체 댓글 수를 계산합니다. (모든 댓글의 수를 구함, 답글 포함)
+    const [totalCommentsResult] = await pool.query<RowDataPacket[]>(`
+      SELECT COUNT(*) AS totalComments
+      FROM xe_comments
+      WHERE document_srl = ${document_srl} AND status <> -1 AND parent_srl = 0
     `)
 
-    // comments를 처리합니다.
-    const comments = commentsRows.map((comment: any) => {
-      let displayedContent
-
-      // 삭제된 댓글
-      if (comment.status === 0 || comment.status === -1) {
-        displayedContent = '삭제된 댓글 입니다.'
-      } 
-      // 비밀 댓글 처리
-      else if (comment.is_secret === 1) {
-        if (isAdmin) {
-          // 운영자는 비밀 댓글 내용을 볼 수 있습니다.
-          displayedContent = comment.content
-        } else {
-          // 일반 사용자는 비밀 댓글 내용을 볼 수 없습니다.
-          displayedContent = '비밀댓글 입니다.'
-        }
-      } 
-      // 일반 댓글
-      else {
-        displayedContent = comment.content
-      }
-
-      return {
-        comment_srl: comment.comment_srl,
-        module_srl: comment.module_srl,
-        document_srl: comment.document_srl,
-        parent_srl: comment.parent_srl,
-        is_secret: comment.is_secret,
-        content: displayedContent, // 처리된 내용을 할당합니다.
-        voted_count: comment.voted_count,
-        blamed_count: comment.blamed_count,
-        notify_message: comment.notify_message,
-        // password: comment.password,
-        user_id: comment.user_id,
-        user_name: comment.user_name,
-        member_srl: comment.member_srl,
-        email_address: comment.email_address,
-        homepage: comment.homepage,
-        uploaded_count: comment.uploaded_count,
-        regdate: comment.regdate,
-        last_update: comment.last_update,
-        ipaddress: comment.ipaddress,
-        list_order: comment.list_order,
-        status: comment.status,
-      }
-    })
+    // 전체 페이지 수를 계산합니다. (최상위 댓글만 대상으로 계산)
+    const totalCommentsPages = Math.ceil(
+      totalCommentsResult?.[0]?.totalComments / commentsPageSize
+    )
 
     const commentsData = {
-      content: comments,
+      content: allComments,
       page: {
-        currentPage: totalCommentsPages,
+        currentPage: page,
         totalContents: totalCommentsResult?.[0]?.totalComments,
         totalPages: totalCommentsPages,
       },
       module_srl: 0,
       document_srl,
     }
+
     return {
       props: {
-        comments: JSON.parse(JSON.stringify(commentsData))
-      }
+        comments: JSON.parse(JSON.stringify(commentsData)),
+      },
     } as GetServerSidePropsResult<any>
   } catch (err) {
     console.log(err)
@@ -212,6 +185,36 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
       },
     }
   }
+}
+
+// 비밀 댓글 및 삭제된 댓글 처리를 위한 함수
+const handleCommentContent = (
+  comment: any,
+  isAdmin: boolean,
+  cookieUserId: string | null
+): string => {
+  let displayedContent
+
+  // 삭제된 댓글
+  if (comment.status === 0 || comment.status === -1) {
+    displayedContent = '삭제된 댓글 입니다.'
+  }
+  // 비밀 댓글 처리
+  else if (comment.is_secret === 1) {
+    if (isAdmin || cookieUserId === comment.user_id) {
+      // 운영자는 비밀 댓글 내용을 볼 수 있습니다.
+      displayedContent = comment.content
+    } else {
+      // 일반 사용자는 비밀 댓글 내용을 볼 수 없습니다.
+      displayedContent = '비밀댓글 입니다.'
+    }
+  }
+  // 일반 댓글
+  else {
+    displayedContent = comment.content
+  }
+
+  return displayedContent
 }
 
 export default function Comment ({comments}:{comments:any}) {
@@ -252,12 +255,6 @@ export default function Comment ({comments}:{comments:any}) {
     setCurrentCommentPage(page)
     setCommentPageRandomKey(Math.random())
   }, [hydrated, commentPageRandomKey, currentCommentPage])
-
-  const clickCommentPage = useCallback((page:number) => {
-    if(!commentTitleRef.current) return
-    changeCommentPage(page)
-    commentTitleRef.current.scrollIntoView()
-  }, [])
 
   const commentTitleRef = useRef<HTMLHeadingElement>(null)
   useEffect(() => {
@@ -364,8 +361,9 @@ export default function Comment ({comments}:{comments:any}) {
       const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/board/${comments.module_srl}/document/${comments.document_srl}/comment/push`, data)
       if(res.status === 200 || res.status === 201) {
         console.log(res.data)
-        setReplyData(initialRepData)
-        changeCommentPage(1)
+        router.reload()
+        // setReplyData(initialRepData)
+        // changeCommentPage(1)
       } else throw new Error('network failed')
     } catch (err) {
       console.log(err)
@@ -439,13 +437,14 @@ export default function Comment ({comments}:{comments:any}) {
     try {
       const data = { ...commentData }
       if(!myInfo && (!data.user_name || !data.password)) return alert('아이디와 비밀번호를 채워주세요')
+      if(!data.content) return alert('내용을 입력해주세요')
+      if(!myInfo && !(commentId && commentPw)) return alert('이름과 비밀번호를 채워주세요')
       const ip = await axios.get('https://blog.gloomy-store.com/getIp.php')
       data.ipaddress = ip.data
       const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/board/${comments.module_srl}/document/${comments.document_srl}/comment/push`, data)
       if(res.status === 200 || res.status === 201) {
-        console.log(res.data)
-        changeCommentPage(1)
-        setCommentData(initialCommentData)
+        router.push(`/comment/1`)
+        setPageResetKey(Math.random())
       } else throw new Error('network failed')
     } catch (err) {
       console.log(err)
@@ -472,6 +471,7 @@ export default function Comment ({comments}:{comments:any}) {
           if(res.status === 200 || res.status === 201) {
             alert('삭제에 성공 했습니다.')
             getCommentData(currentCommentPage)
+            setPageResetKey(Math.random())
           }
         }
       } else {
@@ -490,6 +490,7 @@ export default function Comment ({comments}:{comments:any}) {
           if(res.status === 200 || res.status === 201) {
             alert('삭제에 성공 했습니다.')
             getCommentData(currentCommentPage)
+            setPageResetKey(Math.random())
           }
         }
       }
@@ -513,7 +514,7 @@ export default function Comment ({comments}:{comments:any}) {
       })
       if(res.data === true) {
         alert('성공')
-        setCommentPageRandomKey(Math.random())
+        setPageResetKey(Math.random())
         getCommentData(currentCommentPage)
       } else throw new Error(`Failed`)
     } catch(err) {
@@ -561,8 +562,8 @@ export default function Comment ({comments}:{comments:any}) {
             password: Prompt
           }
           const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/board/${comments.module_srl}/document/${comments.document_srl}/comment/edit`, data)
-          if(res.data === true) {
-            setEditingComment({...comment, new_content: comment.content, active: true, password: Prompt})
+          if(res.status === 200) {
+            setEditingComment({...comment, new_content: res.data.content, active: true, password: Prompt})
           }
         }
       } else {
@@ -581,13 +582,11 @@ export default function Comment ({comments}:{comments:any}) {
       const res = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/board/${comments.module_srl}/document/${comments.document_srl}/comment/edit`, data)
       if(res.status === 200 || res.status === 201) {
         alert('수정을 성공 했습니다.')
-        changeCommentPage(currentCommentPage)
+        router.reload()
       }
-      setEditingComment(initialEditingCommentData)
     } catch(err) {
       console.log(err)
       alert('실패했습니다.')
-      setEditingComment(initialEditingCommentData)
     }
   }, [myInfo, editingComment])
 
@@ -607,14 +606,33 @@ export default function Comment ({comments}:{comments:any}) {
     alert('추억으로 남겨둡시다')
   }, [])
 
+  // page reset
+  const [pageResetKey, setPageResetKey] = useState(0)
+  const divRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if(!divRef.current) return
+    divRef.current.scrollTo(0, 0)
+    console.log(router.query.page)
+  }, [router.query.page])
+
+  useEffect(() => {
+    if(!divRef.current) return
+    setCommentData(initialCommentData)
+    setReplyData(initialRepData)
+    setEditingComment(initialEditingCommentData)
+    divRef.current.scrollTo(0, 0)
+  }, [pageResetKey])
+  console.log(router)
+
   return (
     <>
       <HeadComponent
-        title={'글루미스토어 - 프론트엔드 개발자 영 블로그'}
-        description={'프론트엔드 개발자 영의 블로그입니다. 이 웹사이트의 모든 동작은 state binding으로 구현되어있습니다. 또한 이 웹사이트는 Next.js로 구현되어있습니다.'}
-        keywords={'글루미스토어, 퍼블리셔, 프론트엔드, 개발자, FE, 웹퍼블리셔, HTML5, CSS3, ES6, Jquery, PHP, Photoshop'}
+        title={'글루미스토어 - 방명록, comment'}
+        description={'글루미 스토어 방명록입니다. 댓글을 남겨주세요. 영이에게 하고싶은 말이 있다면 얼마든지 하십시오'}
+        keywords={'글루미스토어, 프론트엔드, 개발자, 방명록, comment'}
+        canonical={process.env.NEXT_PUBLIC_API_URL + router.asPath}
       />
-      <div className='gl-wrap'>
+      <div className='gl-wrap gl-comment'>
         <h1 className='invisible'>방명록</h1>
         <div className='gl-wrap__inner'>
           <HeaderNoContent />
@@ -640,10 +658,14 @@ export default function Comment ({comments}:{comments:any}) {
                   </button>
                   <article className='my-word-area'>
                     <h2>
-                      <span>TODAY IS...</span>
-                      <span className='icon'>ㅇ</span>
-                      <span className='word'>우울</span>
-                      </h2>
+                      <span className='today-is'>TODAY IS...</span>
+                      <div>
+                        <span className='icon'>
+                          <img src='/images/icon/cyicon.gif' alt='icon' />
+                        </span>
+                        <span className='word'>우울</span>
+                      </div>
+                    </h2>
 <p>{`짧은 밤이여
   백가지 꿈을 꾸기엔
   너무나 짧은 밤이여`}
@@ -657,18 +679,51 @@ export default function Comment ({comments}:{comments:any}) {
               </section>
               <section className='gl-ui-right'>
                 <h2>방명록</h2>
-                <div className='box'>
+                <div className='box' ref={divRef}>
                   <article className='comment-create-area'>
                     <div className='comment-create-area__main'>
-                      <div className='minimi'>
+                      <div className={`minimi ${!myInfo && 'no-member'}`}>
                         <ProfileImage 
                           user_id={myInfo && myInfo.split('|')[1]} 
                           alt='minimi'
                         />
+                        {
+                          !myInfo && <div className='no-member-form'>
+                          <div>
+                            <input 
+                              type='text' 
+                              name='comment_name' 
+                              placeholder='이름' 
+                              maxLength={30} 
+                              required={true} data-gtm-form-interact-field-id='0'
+                              disabled={!!myInfo} 
+                              value={commentId}
+                              onChange={(e) => setCommentId(e.currentTarget.value)}
+                            />
+                          </div>
+                          <div>
+                            <input 
+                              type='password' 
+                              name='comment_pass' 
+                              placeholder='비밀번호' 
+                              maxLength={15} required={true} autoComplete='on' data-gtm-form-interact-field-id='1' 
+                              disabled={!!myInfo} 
+                              value={commentPw}
+                              onChange={(e) => setCommentPw(e.currentTarget.value)}
+                            />
+                          </div>
+                        </div>
+                        }
                       </div>
                       <div className='create-text'>
                         <textarea 
                           name='create-text' 
+                          cols={30} 
+                          rows={10} 
+                          placeholder='댓글을 남겨주세요!' 
+                          value={commentData.content}
+                          onChange={(e) => changeCommentValue(e.currentTarget.value)}
+                          required={true} 
                         />
                       </div>
                     </div>
@@ -683,7 +738,21 @@ export default function Comment ({comments}:{comments:any}) {
                           <label htmlFor='radio2'>카드</label>
                         </span>
                       </div>
-                      <button>확인</button>
+                      <div>
+                        <input 
+                          type='checkbox' 
+                          className='check_secret'
+                          name='check_secret' 
+                          id='check_secret'
+                          onChange={(e) => changeCommentSecret(e.currentTarget.checked)} 
+                        />
+                        <label htmlFor='check_secret'>비밀 댓글</label>
+                        <button 
+                          type='button' 
+                          className='submit-button'
+                          onClick={submitComment}
+                        >확인</button>
+                      </div>
                     </div>
                   </article>
                   <div className='comment-list-area'>
@@ -693,10 +762,15 @@ export default function Comment ({comments}:{comments:any}) {
                         <div className={`comment-title-area ${comment.is_secret && 'is-secret'}`}>
                           <div>
                             <span className='comment-title-number'>NO. {comment.comment_srl}</span>
-                            <span className='comment-title-name'>{comment.user_name}</span>
-                            <Link href='/' target='_blank' className='home-icon'>
+                            {
+                              comment.user_id ?
+                              <button className='comment-title-name is-button'>{comment.user_name}</button>
+                              :
+                              <span className='comment-title-name'>{comment.user_name}</span>
+                            }
+                            <Link href='#!' /*target='_blank'*/ className='home-icon'>
                               <Image 
-                                src={`/images/file/members/uptownboy7/profile.webp`} 
+                                src={`/images/icon/homepage.webp`} 
                                 alt='homepage'
                                 width={14}
                                 height={14} 
@@ -719,6 +793,7 @@ export default function Comment ({comments}:{comments:any}) {
                                     )}
                                     {myInfo?.split('|')[1] === comment.user_id && editingComment.active && (
                                       <>
+
                                         <button type='button' onClick={onEditCommentCancel}>취소</button>
                                         <span> / </span>
                                         <button type='button' onClick={onEditCommentComplete}>수정완료</button>
@@ -781,10 +856,10 @@ export default function Comment ({comments}:{comments:any}) {
                             ) : (
                               <p>
                                 {
-                                  comment.is_secret && <span className='is-secret-comment'>
+                                  comment.is_secret ? <span className='is-secret-comment'>
                                     <b>비밀이야</b>
                                     (이 글은 홈주인과 작성자만 볼 수 있어요.)
-                                  </span>
+                                  </span> : null
                                 }
                                 <span>
                                 {comment.content}
@@ -801,20 +876,49 @@ export default function Comment ({comments}:{comments:any}) {
                                   !myInfo && <div className='info-area'>
                                     <input 
                                       type='text' 
+                                      name='comment_name' placeholder='이름' 
+                                      maxLength={15}
+                                      disabled={!!myInfo} 
                                       value={replyData.user_name}
                                       onChange={(e) => setReplyId(e.currentTarget.value)}
                                     />
                                     <input 
-                                      type='text' 
+                                      type='password' name='rep_rep_pass' placeholder='비밀번호' 
+                                      maxLength={15} 
+                                      autoComplete='off'
                                       value={replyData.password}
+                                      disabled={!!myInfo}
                                       onChange={(e) => setReplyPw(e.currentTarget.value)}
                                     />
                                   </div>
                                 }
                                 <textarea 
-                                  name='comment-rep-create-text' 
-                                />
-                                <button>확인</button>
+                                  name='comment_rep_text' 
+                                  className='comment_rep_text' 
+                                  cols={30} 
+                                  rows={10} 
+                                  placeholder='답글을 남겨주세요!' 
+                                  value={replyData.content}
+                                  onChange={(e) => changeReplyTextValue(e.currentTarget.value)}
+                                ></textarea>
+                                <div className='submit-box'>
+                                  <div>
+                                    <input 
+                                      type='checkbox' 
+                                      className='check_secret'
+                                      id={'check_secret_' + idx} 
+                                      onChange={(e) => changeReplySecret(comment.comment_srl, e.currentTarget.checked)}  
+                                    />
+                                    <label htmlFor={'check_secret_' + idx}>
+                                      비밀 댓글
+                                    </label>
+                                  </div>
+                                  <button 
+                                    type='button' 
+                                    className={'submit-button'}
+                                    onClick={submitReply}
+                                  >작성</button>
+                                </div>
                               </article>
                             </form>
                           </div>
@@ -823,32 +927,137 @@ export default function Comment ({comments}:{comments:any}) {
                       :
                       <article className={`comment-rep ${comments?.content?.[idx - 1]?.parent_srl === 0 && 'comment-rep-first'} ${comments?.content?.[idx + 1]?.parent_srl === 0 && 'comment-rep-last'}`} key={comment.comment_srl}>
                         <p>
-                          <span className={`rep-name ${comment.user_id && 'is-member'}`}>
-                            {comment.user_name}
-                          </span>
+                          {
+                            comment.user_id ?
+                            <button className='rep-name is-member'>{comment.user_name}</button>
+                            :
+                            <span className='rep-name'>{comment.user_name}</span>
+                          }
                           <span className='rep-message'>
+                            {
+                              editingComment.active && editingComment.comment_srl === comment.comment_srl ?
+                              <textarea 
+                                className='edit_area' 
+                                cols={30} 
+                                rows={1} 
+                                placeholder='수정할 댓글을 남겨주세요!' 
+                                value={editingComment.new_content}
+                                onChange={(e) => changeEditingCommentTextValue(e.currentTarget.value)}
+                              />
+                            :
+                            <>
                             :&nbsp;
                             {comment.content}
+                            </>
+                            }
                           </span>
                           <span className='rep-date'>
                             ({moment(comment.regdate).format('YYYY.MM.DD HH:mm')})
                           </span>
-                          <button className='rep-edit'>
-                            <Image 
-                              src='/images/file/members/uptownboy7/mini.webp' 
-                              alt='eraser' 
-                              width={12}
-                              height={12}   
-                            />
-                          </button>
-                          <button className='rep-delete'>
-                            <Image 
-                              src='/images/file/members/uptownboy7/mini.webp' 
-                              alt='delete'
-                              width={12}
-                              height={12}   
-                            />
-                          </button>
+                          {
+                          // 로그인 한 댓글
+                          comment.user_id ? <>
+                            {
+                              // 로그인 한 댓글인데, 나도 로그인 했고, 내가 댓글의 주인일 때
+                              myInfo &&
+                              (myInfo as string).split('|')[1] === comment.user_id && 
+                              !editingComment.active ? <>
+                              <button 
+                                className='rep-edit'
+                                type='button'
+                                onClick={() => onEditComment(comment)} 
+                              >
+                                <Image 
+                                  src='/images/icon/eraser.webp' 
+                                  alt='eraser' 
+                                  width={12}
+                                  height={12}   
+                                />
+                              </button>
+                              <button 
+                                className='rep-delete'
+                                type='button' 
+                                onClick={() => onDeleteComment(comment.comment_srl)}
+                              >
+                                <Image 
+                                  src='/images/icon/xbutton.webp' 
+                                  alt='delete'
+                                  width={12}
+                                  height={12}   
+                                />
+                              </button>
+                            </>
+                            :
+                            // 수정상태일때
+                            myInfo &&
+                            (myInfo as string).split('|')[1] === comment.user_id && 
+                            editingComment.active &&
+                            editingComment.comment_srl === comment.comment_srl &&
+                            <>
+                              <button 
+                                type='button' 
+                                className='rep-edit-cancel'
+                                onClick={onEditCommentCancel}  
+                              >취소</button>
+                              <span> / </span>
+                              <button 
+                                type='button' 
+                                className='rep-edit-complete'
+                                onClick={() => onEditCommentComplete()}
+                              >수정완료</button>
+                            </>
+                            }
+                          </>
+                          :
+                          <>
+                          {
+                            // 로그인 안 한 댓글인데, 나도 로그인 안했을 때
+                            // 수정상태가 아닐 때
+                            !myInfo && !editingComment.active ? <>
+                            <button 
+                              className='rep-edit'
+                              type='button'
+                              onClick={() => onEditComment(comment)} 
+                            >
+                              <Image 
+                                src='/images/icon/eraser.webp' 
+                                alt='eraser' 
+                                width={12}
+                                height={12}   
+                              />
+                            </button>
+                            <button 
+                              className='rep-delete'
+                              type='button' 
+                              onClick={() => onDeleteComment(comment.comment_srl)}
+                            >
+                              <Image 
+                                src='/images/icon/xbutton.webp' 
+                                alt='delete'
+                                width={12}
+                                height={12}   
+                              />
+                            </button>
+                          </>
+                            :
+                            // 수정상태일때
+                            !myInfo && editingComment.active && editingComment.comment_srl === comment.comment_srl &&
+                            <>
+                              <button 
+                                type='button' 
+                                className='rep-edit-cancel'
+                                onClick={onEditCommentCancel}  
+                              >취소</button>
+                              <span> / </span>
+                              <button 
+                                type='button' 
+                                className='rep-edit-complete'
+                                onClick={() => onEditCommentComplete()}
+                              >수정완료</button>
+                            </>
+                          }
+                          </>
+                        }
                         </p>
                       </article>
                     ))}
@@ -856,7 +1065,7 @@ export default function Comment ({comments}:{comments:any}) {
                       <Link type='button' 
                         className='arrow_btn double first' 
                         aria-label='arrow_btn_double_first' 
-                        href={comments.page.currentPage !== 1 ? `/comments/1` : `:`}
+                        href={comments.page.currentPage !== 1 ? `/comment/1` : `#!`}
                         title={`방명록 첫 페이지로 이동`}
                       >
                         <i className='fa fa-angle-double-left'></i>
@@ -865,7 +1074,7 @@ export default function Comment ({comments}:{comments:any}) {
                         type='button'
                         className='arrow_btn single prev'
                         aria-label='arrow_btn_single_prev'
-                        href={comments.page.currentPage > 1 ? `/comments/${comments.page.currentPage - 1}` : `:`}
+                        href={comments.page.currentPage > 1 ? `/comment/${comments.page.currentPage - 1}` : `#!`}
                         id='pageBoardLeft'
                         title={`방명록 이전 페이지로 이동`}
                       >
@@ -888,7 +1097,7 @@ export default function Comment ({comments}:{comments:any}) {
                         type='button'
                         className='arrow_btn single next'
                         aria-label='arrow_btn_single_next'
-                        href={comments.page.currentPage < comments.page.totalPages ? `/comments/${comments.page.currentPage + 1}` : `:`}
+                        href={comments.page.currentPage < comments.page.totalPages ? `/comment/${comments.page.currentPage + 1}` : `#!`}
                         id='pageBoardRight'
                         title={`방명록 다음 페이지로 이동`}
                       >
@@ -898,7 +1107,7 @@ export default function Comment ({comments}:{comments:any}) {
                         type='button'
                         className='arrow_btn double last'
                         aria-label='arrow_btn_double_last'
-                        href={comments.page.currentPage < comments.page.totalPages ? `/comments/${comments.page.totalPages}` : `:`}
+                        href={comments.page.currentPage < comments.page.totalPages ? `/comment/${comments.page.totalPages}` : `#!`}
                         id='pageBoardRightDouble'
                         title={`방명록 마지막 페이지로 이동`}
                       >
@@ -920,15 +1129,15 @@ function ProfileImage ({
   user_id, 
   alt, 
   size = {
-    width: 150,
-    height: 150
+    width: 148,
+    height: 148
   } , 
   className }: {user_id?:string | null, alt:string, size?: { width: number, height: number} , className?:string}) {
 
   const [imgSrc, setImgSrc] = useState(user_id ? `/images/file/members/${user_id}/profile.webp`: '/images/file/members/default-user2.webp')
 
   useEffect(() => {
-    setImgSrc(`/images/file/members/${user_id}/profile.webp`)
+    setImgSrc(user_id ? `/images/file/members/${user_id}/profile.webp` : `/images/file/members/default-user2.webp`)
   }, [user_id])
 
   return (

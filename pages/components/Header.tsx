@@ -35,13 +35,21 @@ export default function Header() {
   return (
     <header className={styles['gl-header']}>
       <div className={styles['gl-imgbox']}>
-        <a href='/' className={styles['gl-imgbox-radius']}>
+        <Link href='/' className={styles['gl-imgbox-radius']}>
           <h2>Gloomy Store</h2>
-        </a>
+        </Link>
       </div>
       <aside className={styles['gl-nav-side']}>
         <div className='d-flex justify-between'>
           <ul>
+            <li className='active'>
+              <Link
+                href='/'
+                title='home page'
+              >
+                <span className='t-purple'>H</span>ome
+              </Link>
+            </li>
             <li>
               <a
                 href='#!'

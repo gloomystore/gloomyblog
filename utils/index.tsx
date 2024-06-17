@@ -1,1 +1,1 @@
-export { getDates, strip_tags, encryptParam } from './common'
+export { getDates, removeTags, encryptParam } from './common'

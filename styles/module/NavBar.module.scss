@@ -145,11 +145,14 @@
       border-top: 2px solid #d2b369;
       top: 75px;
       background: rgba(0, 0, 0, 0.75);
-      width: 100vw;
-      left: -100vw;
+      width: 100%;
       bottom: 0;
       height: calc(100vh - 75px);
       transition: 0.2s;
+      left: -100vw;
+      @media (max-width: 375px) {
+        left: -375px;
+      }
       &.active {
         left: 0;
       }

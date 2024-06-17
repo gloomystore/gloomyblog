@@ -21,6 +21,8 @@ import jwt from 'jsonwebtoken'
 import { GetServerSidePropsContext } from 'next'
 import MiniProfileImage from './components/MiniProfile'
 import Image from 'next/image'
+import Head from 'next/head'
+import { useRouter } from 'next/router'
 
 export const getServerSideProps = async (ctx:GetServerSidePropsContext) => {
   try {
@@ -37,6 +39,10 @@ export const getServerSideProps = async (ctx:GetServerSidePropsContext) => {
         isAdmin = myInfo?.split('|')[1] === process.env.NEXT_PUBLIC_ADMIN_ID
       } catch (error) {
         console.error('JWT 검증 실패:', error)
+        ctx.res.setHeader('Set-Cookie', [
+          `accessToken=; Max-Age=0; Path=/; HttpOnly`,
+          `myInfo=; Max-Age=0; Path=/; HttpOnly`,
+        ])
       }
     }
 
@@ -896,12 +902,15 @@ export default function Home({
     setEditingComment(initialEditingCommentData)
   }, [editingComment])
 
+  const router = useRouter()
+
   return (
     <>
       <HeadComponent
-      title={'글루미스토어 - 프론트엔드 개발자 영 블로그'}
-      description={'프론트엔드 개발자 영의 블로그입니다. 이 웹사이트의 모든 동작은 state binding으로 구현되어있습니다. 또한 이 웹사이트는 Next.js로 구현되어있습니다.'}
-      keywords={'글루미스토어, 퍼블리셔, 프론트엔드, 개발자, FE, 웹퍼블리셔, HTML5, CSS3, ES6, Jquery, PHP, Photoshop'}
+        title={'글루미스토어 - 프론트엔드 개발자 영 블로그'}
+        description={'프론트엔드 개발자 영의 블로그입니다. 이 웹사이트의 모든 동작은 state binding으로 구현되어있습니다. 또한 이 웹사이트는 Next.js로 구현되어있습니다.'}
+        keywords={'글루미스토어, 퍼블리셔, 프론트엔드, 개발자, FE, 웹퍼블리셔, HTML5, CSS3, ES6, Jquery, PHP, Photoshop'}
+        canonical={process.env.NEXT_PUBLIC_API_URL + router.asPath}
       />
       {isLoad && <Loading
         isLoad={isLoad}
@@ -1378,7 +1387,7 @@ export default function Home({
                                     !comment.user_id &&
                                     <button type='button' onClick={() => profileView(undefined, comment.user_name)}>
                                       <MiniProfileImage
-                                        user_id='/images/file/members/default-user.png' 
+                                        user_id={undefined} 
                                         alt='profile image'
                                         size={{ width: 48, height: 48 }}
                                       />
