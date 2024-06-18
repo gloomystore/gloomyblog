@@ -2,23 +2,23 @@
 import styles from '@/styles/module/Home.module.scss'
 
 // module
-import { useRecoilState } from 'recoil';
+import { useRecoilState } from 'recoil'
 import { LoadAtom, ScrollBlockAtom } from '@/store/CommonAtom'
-import HeadComponent from '@/pages/components/HeadComponent';
-import Loading from '@/pages/components/Loading';
-import { useCallback, useMemo, useState } from 'react';
+import HeadComponent from '@/pages/components/HeadComponent'
+import Loading from '@/pages/components/Loading'
+import { useCallback, useMemo, useState } from 'react'
 // import axios from 'axios'
 
 import Header from '@/pages/components/Header'
-import { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
-import { ParsedUrlQuery } from 'querystring';
-import pool from '@/pages/api/db/mysql';
-import { RowDataPacket } from 'mysql2';
-import { removeTags, removeTagsExceptCode } from '@/utils/common';
-import Link from 'next/link';
+import { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult } from 'next'
+import { ParsedUrlQuery } from 'querystring'
+import pool from '@/pages/api/db/mysql'
+import { RowDataPacket } from 'mysql2'
+import { removeTags, removeTagsExceptCode } from '@/utils/common'
+import Link from 'next/link'
 import nextCookies from 'next-cookies'
 import jwt from 'jsonwebtoken'
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/router'
 
 type Props = {
   props : {
@@ -34,7 +34,8 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
     if (token) {
       try {
         const secret = process.env.NEXT_PUBLIC_JWT_SECRET ?? ''
-        // const decoded = jwt.verify(token, secret)
+        const decoded = jwt.verify(token, secret)
+        console.log(decoded)
         const cookieMyInfo = cookies.myInfo ?? null
         myInfo = cookieMyInfo ? atob(atob(cookieMyInfo)) : null // 디코딩된 사용자 정보
         isAdmin = myInfo?.split('|')[1] === process.env.NEXT_PUBLIC_ADMIN_ID
@@ -45,35 +46,44 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
 
     const page = parseInt(ctx?.params?.page as string)
     const module_srl = parseInt(ctx?.params?.module_srl as string)
-    const pageSize = 9;
+    const pageSize = 9
     const offset = (page - 1) * pageSize
+
+    // module_srl이 -1일 경우 사용할 기본 값들
+    const defaultModuleSrls = [52, 214]
+
+    // module_srl 값에 따라 사용할 값 결정
+    const moduleSrls = module_srl === -1 ? defaultModuleSrls : [module_srl]
+
+    // `?` 대신에 배열 값들을 안전하게 포함시키기 위해 '?'를 반복하여 생성
+    const placeholders = moduleSrls.map(() => '?').join(',')
 
     const [documentRows] = await pool.query<RowDataPacket[]>(`
       SELECT blamed_count,
-        category_srl,
-        module_srl,
-        comment_count,
-        comment_status,
-        content,
-        document_srl,
-        email_address,
-        last_update,
-        member_srl,
-        readed_count,
-        regdate,
-        status,
-        tags,
-        thumb,
-        title,
-        uploaded_count,
-        user_id,
-        user_name,
-        voted_count
+            category_srl,
+            module_srl,
+            comment_count,
+            comment_status,
+            content,
+            document_srl,
+            email_address,
+            last_update,
+            member_srl,
+            readed_count,
+            regdate,
+            status,
+            tags,
+            thumb,
+            title,
+            uploaded_count,
+            user_id,
+            user_name,
+            voted_count
       FROM xe_documents
-      WHERE module_srl = ?
+      WHERE module_srl IN (${placeholders})
       ORDER BY regdate DESC
       LIMIT ? OFFSET ?
-    `, [module_srl, pageSize, offset])
+    `, [...moduleSrls, pageSize, offset])
 
     // 콘텐츠의 길이를 200자로 제한하는 함수
     const limit200 = (str: string) => {
@@ -86,9 +96,9 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
     const [totalRows] = await pool.query<RowDataPacket[]>(`
       SELECT COUNT(*) as total
       FROM xe_documents
-      WHERE module_srl IN (${module_srl})
-    `);
-    const totalCount = totalRows[0].total;
+      WHERE module_srl IN (${placeholders})
+    `, [...moduleSrls])
+    const totalCount = totalRows[0].total
 
     // 총 페이지 수를 계산합니다
     const totalPages = Math.ceil(totalCount / pageSize)
@@ -123,14 +133,14 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
       }
     }
   }
-};
+}
 
 export default function Board({
   documents = '[]',
   module_srl,
 }:{documents: any, module_srl:number}) {
   // 로딩
-  const [scrollBlock, setScrollBlock] = useRecoilState(ScrollBlockAtom);
+  const [scrollBlock, setScrollBlock] = useRecoilState(ScrollBlockAtom)
   const [load, setLoad] = useRecoilState(LoadAtom)
   const [isLoad, setIsLoad] = useState(false)
   const [isContentLoad, setIsContentLoad] = useState(false)

@@ -100,7 +100,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
     `)
 
     // comments의 페이지 수를 계산합니다.
-    const totalCommentsPages = Math.ceil(totalCommentsResult?.[0]?.totalComments/commentsPageSize)
+    const totalCommentsPages = Math.ceil((totalCommentsResult?.[0]?.totalComments + commentsPageSize)/commentsPageSize)
 
     // const commentOffset = (totalCommentsPages - 1) * commentsPageSize
 
@@ -233,7 +233,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
     const commentsData = {
       content: comments,
       page: {
-        currentPage: totalCommentsPages,
+        currentPage: page,
         totalContents: totalCommentsResult?.[0]?.totalComments,
         totalPages: totalCommentsPages,
       },
@@ -312,7 +312,16 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
 export default function Document({
   documents = {},
   otherPost = [],
-  comments = {},
+  comments = {
+    content: [],
+    page: {
+      currentPage: 1,
+      totalPages: 1,
+      totalCount: 1,
+      module_srl: -1,
+      document_srl: -1,
+    },
+  },
   document_srl = 0,
   module_srl = -1,
 }:{documents: any, otherPost: any[], comments: any, document_srl: any, module_srl: any}) {
@@ -829,6 +838,7 @@ export default function Document({
                                     />
                                     :
                                     <>
+                                    {JSON.stringify(comment)}
                                     {comment.content}
                                     </>
                                   }
