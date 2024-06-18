@@ -1,6 +1,6 @@
 {
   "short_name": "Gloomy-store",
-  "name": "Gloomy-store : Young's Portfolio",
+  "name": "Gloomy-store : Young's Development Blog",
   "icons": [
     {
       "src": "favicon.ico",
@@ -8,18 +8,18 @@
       "type": "image/x-icon"
     },
     {
-      "src": "logo192.png",
-      "type": "image/png",
+      "src": "logo192.webp",
+      "type": "image/webp",
       "sizes": "192x192"
     },
     {
-      "src": "logo512.png",
-      "type": "image/png",
+      "src": "logo512.webp",
+      "type": "image/webp",
       "sizes": "512x512"
     }
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#ff9e9c",
+  "theme_color": "#4c2765",
   "background_color": "#ffffff"
 }

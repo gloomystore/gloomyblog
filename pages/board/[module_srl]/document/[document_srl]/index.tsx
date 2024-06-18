@@ -804,7 +804,7 @@ export default function Document({
                                     !comment.user_id &&
                                     <button type='button' onClick={() => profileView(undefined, comment.user_name)}>
                                       <MiniProfileImage
-                                        user_id='/images/file/members/default-user.png' 
+                                        user_id={undefined} 
                                         alt='profile image'
                                         size={{ width: 48, height: 48 }}
                                       />
@@ -838,7 +838,6 @@ export default function Document({
                                     />
                                     :
                                     <>
-                                    {JSON.stringify(comment)}
                                     {comment.content}
                                     </>
                                   }
