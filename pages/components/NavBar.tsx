@@ -121,17 +121,17 @@ export default function NavBar() {
           `}>
             <h2 className={`${styles['nav-logo']}`}>
               <Link href='/' title='홈페이지로 이동' className={` img-box`}>
-                {/* <Image src={require('/public/images/logo2.png')} alt='logo' className='onlyPC' />
-                <Image src={require('/public/images/logo3.png')} alt='logo' className='onlySP' /> */}
+                {/* <Image src={require('/public/images/logo2.webp')} alt='logo' className='onlyPC' />
+                <Image src={require('/public/images/logo3.webp')} alt='logo' className='onlySP' /> */}
                 <Image 
-                  src='/images/logo2.png' 
+                  src='/images/logo2.webp' 
                   alt='logo' 
                   className='onlyPC' 
                   width={200}
                   height={33}
                 />
                 <Image 
-                  src='/images/logo3.png' 
+                  src='/images/logo3.webp' 
                   alt='logo' 
                   className='onlySP' 
                   width={40}

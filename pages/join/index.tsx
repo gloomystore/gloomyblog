@@ -123,7 +123,7 @@ tG2Xec9HxQVCEMwy4wIDAQAB
             <input type='password' id='password' placeholder='비밀번호를 입력해 주세요.' value={inputPassword} onChange={(e) => setInputPassword(e.target.value)} />
             <button type='button' onClick={() => alert('비밀번호는 hash화 되어 저도 알 수 없습니다!')} title='비밀번호는 hash화 되어 저도 알 수 없습니다!'>
               <Image 
-                src='/images/icon/info.png' 
+                src='/images/icon/info.webp' 
                 alt='비밀번호는 hash화 되어 저도 알 수 없습니다!' 
                 title='비밀번호는 hash화 되어 저도 알 수 없습니다!' 
                 width={27}

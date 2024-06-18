@@ -35,9 +35,9 @@ export default function HeadComponent({
         <meta property='og:type' content='website' /> 
         <meta property='og:title' content={title} />
         <meta property='og:description' content={description} />
-        <meta property='og:image' content='https://www.gloomy-store.com/images/logo20_1.png' />
+        <meta property='og:image' content='https://www.gloomy-store.com/images/logo3.webp' />
         <meta property='og:url' content='https://www.gloomy-store.com' />
-        <link rel='apple-touch-icon' href='/logo192.png' />
+        <link rel='apple-touch-icon' href='/logo192.webp' />
 	      <link rel='manifest' href='/manifest.json' />
         <meta name='naver-site-verification' content='d734660b63628ebd5ba4493a3b3f025cf2f0918c' />
         <meta name='google-site-verification' content='NbgJPXuyN9p7v3DvtB-Qadb7xAc0yay5AGeKgMgi_cc' />

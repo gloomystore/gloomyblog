@@ -962,7 +962,7 @@ export default function Document({
                                 <form className={styles['comment_form_rep']}>
                                   <div className={styles['rep']}>
                                     <Image 
-                                      src='/images/icon/arrow-rep.png' 
+                                      src='/images/icon/arrow-rep.webp' 
                                       alt='arrow' 
                                       width={48}
                                       height={48}

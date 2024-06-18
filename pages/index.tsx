@@ -1332,7 +1332,7 @@ export default function Home({
               <article className={styles['like_btns']}>
                 <button className={styles['like_btn']} id='like_btn' type='button' onClick={onLikeButton}>
                   <Image 
-                    src='/images/icon/figma.png' 
+                    src='/images/icon/figma.webp' 
                     alt='figma' 
                     width={50}
                     height={50}
@@ -1343,7 +1343,7 @@ export default function Home({
                     나도 좋아요 누르기
                   </label>
                   <Image
-                    src='/images/icon/info.png'
+                    src='/images/icon/info.webp'
                     className={styles['info']}
                     alt='회원가입을 하고 좋아요를 누를 수 있습니다'
                     title='회원가입을 하고 좋아요를 누를 수 있습니다'
@@ -1540,7 +1540,7 @@ export default function Home({
                                 <form className={stylesBoard['comment_form_rep']}>
                                   <div className={stylesBoard['rep']}>
                                     <Image 
-                                      src='/images/icon/arrow-rep.png' 
+                                      src='/images/icon/arrow-rep.webp' 
                                       alt='arrow' 
                                       width={48}
                                       height={48}

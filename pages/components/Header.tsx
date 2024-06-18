@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRecoilState } from 'recoil'
 import { ProfileModalActiveAtom, ProfileModalAtom } from '@/store/ModalAtom'
 import axios from 'axios'
+import Image from 'next/image'
 
 export default function Header() {
   // modal
@@ -93,9 +94,11 @@ export default function Header() {
             title='go to profile'
             onClick={(e) => profileView((process.env.NEXT_PUBLIC_ADMIN_ID as string))}
           >
-            <img
+            <Image
               src='/images/admin.webp'
               alt='profile'
+              width={130}
+              height={130}
             />
           </a>
         </div>

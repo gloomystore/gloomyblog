@@ -112,8 +112,8 @@ export default function Footer({statistics}:any) {
       <div className={`${styles['footer-inner']}`}>
         <article className={`${styles['footer-logo']}`}>
           <Link className='img-box' href='/'>
-              <Image src={'/images/logo2.png'} alt='logo' className='onlyPC' width={160} height={22} />
-              <Image src={'/images/logo3.png'} alt='logo' className='onlySP' width={55} height={49} />
+              <Image src={'/images/logo2.webp'} alt='logo' className='onlyPC' width={160} height={22} />
+              <Image src={'/images/logo3.webp'} alt='logo' className='onlySP' width={55} height={49} />
           </Link>
         </article>
         <article className={`${styles['footer-desc']}`}>

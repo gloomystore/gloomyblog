@@ -26,6 +26,9 @@ import Cookies from 'js-cookie'
 import AppLayout from "./AppLayout";
 
 const AuthChecker = () => {
+  useEffect(() => {
+    console.warn('%cGloomy-store \n %c클라이언트사이드 Mounted 완료','color:#731aed;font-weight:bold;font-size:2rem;line-height:1', 'color:#eee;font-weight:100;font-size:0.7rem;')
+  } ,[])
   const router = useRouter()
   const [isHeaderInfoAttached] = useState(false)
   const [isAdmin, setIsAdmin] = useRecoilState(IsAdminAtom)
