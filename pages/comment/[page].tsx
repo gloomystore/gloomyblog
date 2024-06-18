@@ -10,7 +10,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import pool from '../api/db/mysql'
 
 import nextCookies from 'next-cookies'
-import jwt from 'jsonwebtoken'
+// import jwt from 'jsonwebtoken'
 import moment from 'moment'
 import { MyInfoAtom } from '@/store/CommonAtom'
 import { useRecoilState } from 'recoil'
@@ -21,9 +21,6 @@ import { TodayHitAtom, TotalHitAtom } from '@/store/StatisticsAtom'
 
 interface Props {
   comments: any
-}
-interface Props {
-  comments: any;
 }
 
 export const getServerSideProps: GetServerSideProps<Props> = async (
@@ -41,7 +38,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (
     if (token) {
       try {
         const secret = process.env.NEXT_PUBLIC_JWT_SECRET ?? ''
-        const decoded = jwt.verify(token, secret) as any
+        // const decoded = jwt.verify(token, secret) as any
         const cookieMyInfo = cookies.myInfo ?? null
         myInfo = cookieMyInfo ? atob(atob(cookieMyInfo)) : null // 디코딩된 사용자 정보
         isAdmin = myInfo?.split('|')[1] === process.env.NEXT_PUBLIC_ADMIN_ID
@@ -630,7 +627,7 @@ export default function Comment ({comments}:{comments:any}) {
         title={'글루미스토어 - 방명록, comment'}
         description={'글루미 스토어 방명록입니다. 댓글을 남겨주세요. 영이에게 하고싶은 말이 있다면 얼마든지 하십시오'}
         keywords={'글루미스토어, 프론트엔드, 개발자, 방명록, comment'}
-        canonical={process.env.NEXT_PUBLIC_API_URL + router.asPath}
+        
       />
       <div className='gl-wrap gl-comment'>
         <h1 className='invisible'>방명록</h1>

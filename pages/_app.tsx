@@ -27,7 +27,7 @@ import AppLayout from "./AppLayout";
 
 const AuthChecker = () => {
   const router = useRouter()
-  const [isHeaderInfoAttached, setIsHeaderInfoAttached] = useState(false)
+  const [isHeaderInfoAttached] = useState(false)
   const [isAdmin, setIsAdmin] = useRecoilState(IsAdminAtom)
   const [myInfo, setMyInfo] = useRecoilState(MyInfoAtom)
   const [myToken, setMyToken] = useRecoilState(MyTokenAtom)

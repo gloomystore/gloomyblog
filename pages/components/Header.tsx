@@ -8,10 +8,10 @@ import axios from 'axios'
 
 export default function Header() {
   // modal
-  const [activeModal, setActiveModal] = useState(false)
-  const closeModal = useCallback(() => {
-    setActiveModal(false)
-  }, [activeModal])
+  // const [activeModal, setActiveModal] = useState(false)
+  // const closeModal = useCallback(() => {
+  //   setActiveModal(false)
+  // }, [activeModal])
 
   const [profileModal, setProfileModal] = useRecoilState(ProfileModalAtom)
   const [profileModalActive, setProfileModalActive] = useRecoilState(ProfileModalActiveAtom)
@@ -51,14 +51,13 @@ export default function Header() {
               </Link>
             </li>
             <li>
-              <a
-                href='#!'
+              <Link
+                href='/profile'
                 title='profile'
                 className='blinkRed'
-                onClick={() => alert('준비중입니다.')}
               >
                 pr<span className='t-red'>o</span>file
-              </a>
+              </Link>
             </li>
             <li className='active'>
               <Link
@@ -95,7 +94,7 @@ export default function Header() {
             onClick={(e) => profileView((process.env.NEXT_PUBLIC_ADMIN_ID as string))}
           >
             <img
-              src='/images/members/uptownboy7/profile.jpg'
+              src='/images/admin.webp'
               alt='profile'
             />
           </a>

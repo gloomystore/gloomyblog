@@ -42,7 +42,8 @@ function Tag({ text, remove, disabled, className }: TagProps) {
 interface TagsInputProps {
   name?: string
   placeHolder?: string
-  value?: string[]
+  state: string[]
+  setState: React.Dispatch<any>
   onChange?: (value: string[]) => void
   onBlur?: () => void
   separators?: string[]
@@ -51,7 +52,7 @@ interface TagsInputProps {
   onRemoved?: (text: string) => void
   disabled?: boolean
   isEditOnRemove?: boolean
-  beforeAddValidate?: (input: string, tags: string[]) => boolean
+  beforeAddValidate?: (input: string, state: string[]) => boolean
   onKeyUp?: (event: React.KeyboardEvent<HTMLInputElement>) => void
   classNames?: {
     tag?: string
@@ -64,7 +65,8 @@ let timeout: number | undefined;
 function GloomyTags({
   name,
   placeHolder,
-  value,
+  state,
+  setState,
   onChange,
   onBlur,
   separators = [],
@@ -77,12 +79,12 @@ function GloomyTags({
   onKeyUp,
   classNames,
 }: TagsInputProps) {
-  const [tags, setTags] = useState<string[]>(value || [])
+  // const [state, setState] = useState<string[]>(value || [])
   const inputRef = useRef<HTMLInputElement>(null)
 
   useFirstRender(() => {
-    onChange && onChange(tags)
-  }, [tags])
+    setState && setState(state)
+  }, [state])
   const ENTER_KEYS = ['Enter']
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if(timeout) return
@@ -90,12 +92,12 @@ function GloomyTags({
     // const inputValue = event.currentTarget.value.trim()
     const inputValue = event.currentTarget.value.replace(/\s/gi, '')
     const key = event.key
-    console.log(event)
-    console.log(inputValue)
+    // console.log(event)
+    // console.log(inputValue)
     if (inputValue && (separators.includes(key) || ENTER_KEYS.includes(key))) {
       event.preventDefault()
 
-      if (beforeAddValidate && !beforeAddValidate(inputValue, tags)) {
+      if (beforeAddValidate && !beforeAddValidate(inputValue, state)) {
         return
       }
 
@@ -104,25 +106,25 @@ function GloomyTags({
         return event.currentTarget.value = ''
       }
 
-      if (!tags.includes(inputValue)) {
-        setTags([...tags, inputValue])
+      if (!state.includes(inputValue)) {
+        setState([...state, inputValue])
         event.currentTarget.value = ''
       } else {
         onExisting && onExisting(inputValue)
       }
     }
 
-    if (!inputValue && !disableBackspaceRemove && tags.length && key === 'Backspace') {
+    if (!inputValue && !disableBackspaceRemove && state.length && key === 'Backspace') {
       event.preventDefault()
       if (isEditOnRemove) {
-        event.currentTarget.value = `${tags.slice(-1)} `
+        event.currentTarget.value = `${state.slice(-1)} `
       }
-      setTags([...tags.slice(0, -1)])
+      setState([...state.slice(0, -1)])
     }
   }
 
   const handleTagRemove = (tag: string) => {
-    setTags(tags.filter((t) => t !== tag))
+    setState(state.filter((t) => t !== tag))
     onRemoved && onRemoved(tag)
   }
 
@@ -193,7 +195,7 @@ function GloomyTags({
 
   return (
     <div className='glt--container'>
-      {tags.map((tag) => (
+      {state.map((tag) => (
         <Tag
           key={tag}
           className={classNames?.tag}

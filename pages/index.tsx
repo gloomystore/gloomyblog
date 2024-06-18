@@ -21,8 +21,6 @@ import jwt from 'jsonwebtoken'
 import { GetServerSidePropsContext } from 'next'
 import MiniProfileImage from './components/MiniProfile'
 import Image from 'next/image'
-import Head from 'next/head'
-import { useRouter } from 'next/router'
 
 export const getServerSideProps = async (ctx:GetServerSidePropsContext) => {
   try {
@@ -33,7 +31,7 @@ export const getServerSideProps = async (ctx:GetServerSidePropsContext) => {
     if (token) {
       try {
         const secret = process.env.NEXT_PUBLIC_JWT_SECRET ?? ''
-        const decoded = jwt.verify(token, secret)
+        // const decoded = jwt.verify(token, secret)
         const cookieMyInfo = cookies.myInfo ?? null
         myInfo = cookieMyInfo ? atob(atob(cookieMyInfo)) : null // 디코딩된 사용자 정보
         isAdmin = myInfo?.split('|')[1] === process.env.NEXT_PUBLIC_ADMIN_ID
@@ -902,15 +900,13 @@ export default function Home({
     setEditingComment(initialEditingCommentData)
   }, [editingComment])
 
-  const router = useRouter()
-
   return (
     <>
       <HeadComponent
         title={'글루미스토어 - 프론트엔드 개발자 영 블로그'}
         description={'프론트엔드 개발자 영의 블로그입니다. 이 웹사이트의 모든 동작은 state binding으로 구현되어있습니다. 또한 이 웹사이트는 Next.js로 구현되어있습니다.'}
         keywords={'글루미스토어, 퍼블리셔, 프론트엔드, 개발자, FE, 웹퍼블리셔, HTML5, CSS3, ES6, Jquery, PHP, Photoshop'}
-        canonical={process.env.NEXT_PUBLIC_API_URL + router.asPath}
+        
       />
       {isLoad && <Loading
         isLoad={isLoad}
@@ -943,9 +939,9 @@ export default function Home({
                     >
                       <p className='thumbnail'>
                         <img
-                          src={item.thumb && item.thumb !== 'null' ? `/images/file/board/${item.document_srl}/thumb.${item.thumb} ` : '/images/flower6.webp'}
+                          src={item.thumb ? `/images/file/board/${item.document_srl}/thumb.webp ` : '/images/flower6.webp'}
                           alt='thumbnail'
-                          onError={(e) => (e.currentTarget.src = '/images/header2_3.webp')}
+                          onError={(e) => (e.currentTarget.src = '/images/flower6.webp')}
                         />
                       </p>
                       <div className='script'>
@@ -983,7 +979,7 @@ export default function Home({
                     >
                       <p className='thumbnail'>
                         <img
-                          src={item.thumb && item.thumb !== 'null' ? `/images/file/board/${item.document_srl}/thumb.${item.thumb} ` : '/images/flower6.webp'}
+                          src={item.thumb ? `/images/file/board/${item.document_srl}/thumb.webp ` : '/images/flower6.webp'}
                           alt='thumbnail'
                           onError={(e) => (e.currentTarget.src = '/images/header2_3.webp')}
                         />

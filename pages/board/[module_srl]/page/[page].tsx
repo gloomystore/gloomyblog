@@ -6,8 +6,8 @@ import { useRecoilState } from 'recoil';
 import { LoadAtom, ScrollBlockAtom } from '@/store/CommonAtom'
 import HeadComponent from '@/pages/components/HeadComponent';
 import Loading from '@/pages/components/Loading';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import axios from 'axios'
+import { useCallback, useMemo, useState } from 'react';
+// import axios from 'axios'
 
 import Header from '@/pages/components/Header'
 import { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
@@ -34,7 +34,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
     if (token) {
       try {
         const secret = process.env.NEXT_PUBLIC_JWT_SECRET ?? ''
-        const decoded = jwt.verify(token, secret)
+        // const decoded = jwt.verify(token, secret)
         const cookieMyInfo = cookies.myInfo ?? null
         myInfo = cookieMyInfo ? atob(atob(cookieMyInfo)) : null // 디코딩된 사용자 정보
         isAdmin = myInfo?.split('|')[1] === process.env.NEXT_PUBLIC_ADMIN_ID
@@ -162,7 +162,7 @@ export default function Board({
           title={`글루미스토어 게시판 - 개발일기 Development`}
           description={'글루미 스토어 개발 일기입니다. 프론트엔드 개발과 관련된 내용이 쓰여져 있어요. 유익할 것입니다.'}
           keywords={`글루미스토어, 프론트엔드, 개발자, 개발, 개발일기, development, frontend, blog, ${documents.data.map((e:any) => e.title).join(', ')}`}
-          canonical={process.env.NEXT_PUBLIC_API_URL + router.asPath}
+          
         />
       }
       {
@@ -170,7 +170,7 @@ export default function Board({
           title={`글루미스토어 게시판 - 일상 이야기`}
           description={'글루미 스토어 일상 일기입니다. Daily Post입니다. 개발자의 개발 외 일상 이야기가 남겨져있습니다.'}
           keywords={`글루미스토어, 프론트엔드, 개발자, 개발, 일상,daily, blog, ${documents.data.map((e:any) => e.title).join(', ')}`}
-          canonical={process.env.NEXT_PUBLIC_API_URL + router.asPath}
+          
         />
       }
       
@@ -231,9 +231,9 @@ export default function Board({
                     >
                       <p className='thumbnail'>
                         <img
-                          src={item.thumb && item.thumb !== 'null' ? `/images/file/board/${item.document_srl}/thumb.${item.thumb} ` : '/images/flower6.webp'}
+                          src={item.thumb ? `/images/file/board/${item.document_srl}/thumb.webp ` : '/images/flower6.webp'}
                           alt='thumbnail'
-                          onError={(e) => (e.currentTarget.src = '/images/header2_3.webp')}
+                          onError={(e) => (e.currentTarget.src = '/images/flower6.webp')}
                         />
                       </p>
                       <div className='script'>

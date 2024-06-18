@@ -3,7 +3,7 @@ import styles from '@/styles/module/Login.module.scss';
 import { useRouter } from 'next/router';
 import { encryptParam } from '@/utils/common';
 import axios from 'axios';
-import { headers } from 'next/headers';
+// import { headers } from 'next/headers';
 import Image from 'next/image';
 
 export default function Join() {

@@ -8,10 +8,10 @@ import axios from 'axios'
 
 export default function HeaderNoContent() {
   // modal
-  const [activeModal, setActiveModal] = useState(false)
-  const closeModal = useCallback(() => {
-    setActiveModal(false)
-  }, [activeModal])
+  // const [activeModal, setActiveModal] = useState(false)
+  // const closeModal = useCallback(() => {
+  //   setActiveModal(false)
+  // }, [activeModal])
 
   const [profileModal, setProfileModal] = useRecoilState(ProfileModalAtom)
   const [profileModalActive, setProfileModalActive] = useRecoilState(ProfileModalActiveAtom)
@@ -47,10 +47,9 @@ export default function HeaderNoContent() {
             </li>
             <li>
               <Link
-                href='#!'
+                href='/profile'
                 title='profile'
                 className='blinkRed'
-                onClick={() => alert('준비중입니다.')}
               >
                 pr<span className='t-red'>o</span>file
               </Link>

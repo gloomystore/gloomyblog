@@ -3,7 +3,8 @@ import React from 'react';
 interface TagsInputProps {
     name?: string;
     placeHolder?: string;
-    value?: string[];
+    state?: string[];
+    setState: React.Dispatch<any>
     onChange?: (tags: string[]) => void;
     onBlur?: any;
     separators?: string[];
@@ -19,6 +20,6 @@ interface TagsInputProps {
         tag?: string;
     };
 }
-declare const GloomyTags: ({ name, placeHolder, value, onChange, onBlur, separators, disableBackspaceRemove, onExisting, onRemoved, disabled, isEditOnRemove, beforeAddValidate, onKeyUp, classNames, }: TagsInputProps) => JSX.Element;
+declare const GloomyTags: ({ name, placeHolder, state, setState, onChange, onBlur, separators, disableBackspaceRemove, onExisting, onRemoved, disabled, isEditOnRemove, beforeAddValidate, onKeyUp, classNames, }: TagsInputProps) => JSX.Element;
 
 export { GloomyTags, TagsInputProps };

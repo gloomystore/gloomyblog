@@ -13,7 +13,7 @@ import { RowDataPacket } from 'mysql2'
 import { removeTags } from '@/utils/common'
 import Link from 'next/link'
 import nextCookies from 'next-cookies'
-import jwt from 'jsonwebtoken'
+// import jwt from 'jsonwebtoken'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRecoilState } from 'recoil'
 import axios from 'axios'
@@ -40,7 +40,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
     if (token) {
       try {
         const secret = process.env.NEXT_PUBLIC_JWT_SECRET ?? ''
-        const decoded = jwt.verify(token, secret)
+        // const decoded = jwt.verify(token, secret)
         const cookieMyInfo = cookies.myInfo ?? null
         myInfo = cookieMyInfo ? atob(atob(cookieMyInfo)) : null // 디코딩된 사용자 정보
         isAdmin = myInfo?.split('|')[1] === process.env.NEXT_PUBLIC_ADMIN_ID
@@ -102,7 +102,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
     // comments의 페이지 수를 계산합니다.
     const totalCommentsPages = Math.ceil(totalCommentsResult?.[0]?.totalComments/commentsPageSize)
 
-    const commentOffset = (totalCommentsPages - 1) * commentsPageSize
+    // const commentOffset = (totalCommentsPages - 1) * commentsPageSize
 
     // comments를 가져옵니다.
     // 댓글을 가져오는 쿼리
@@ -316,7 +316,6 @@ export default function Document({
   document_srl = 0,
   module_srl = -1,
 }:{documents: any, otherPost: any[], comments: any, document_srl: any, module_srl: any}) {
-  console.log(documents)
   const [myInfo, setMyInfo]:[(string | null), Function] = useRecoilState(MyInfoAtom)
   const [load, setLoad] = useRecoilState(LoadAtom)
   const [hydrated, setHydrated] = useState(false)
@@ -732,10 +731,10 @@ export default function Document({
   return (
     <>
       <HeadComponent
-        title={'글루미스토어' + documents.title}
+        title={'글루미스토어 - ' + documents.title}
         description={documents.summary}
         keywords={`${documents.tags.length ? documents.tags.join(', ') : ''} ${documents?.title?.replace(/\s/gi, ', ')} ${documents?.summary?.replace(/\s/gi, ', ')}`}
-        canonical={process.env.NEXT_PUBLIC_API_URL + router.asPath}
+        
       />
       
       <div className='gl-wrap'>
@@ -1142,7 +1141,16 @@ export default function Document({
                   <Link 
                     href={`/board/${module_srl}/document/${item.document_srl}#title`} 
                     title={item.title} 
-                    style={{backgroundImage: `url('/images/file/board/${item.document_srl}/thumb.jpg'), url('/images/flower6.webp')`}} className={`${document_srl === item.document_srl && styles['active']}`}
+                    style={
+                      item.thumb ?
+                      {
+                        backgroundImage: `url('/images/file/board/${item.document_srl}/thumb.webp'), url('/images/flower6.webp')`
+                      }
+                      :
+                      {
+                        backgroundImage: `url('/images/flower6.webp')`
+                      }
+                    } className={`${document_srl === item.document_srl && styles['active']}`}
                     key={'otherPost' + idx}
                   >
                     <div className={styles['script']}>

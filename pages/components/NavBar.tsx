@@ -3,8 +3,8 @@
 import styles from '@/styles/module/NavBar.module.scss'
 // import {useRouter} from 'next/router'
 import { useEffect, useState, useCallback } from 'react';
-import { useRecoilState, useRecoilValue } from 'recoil';
-import { IsAdminAtom, LoadAtom, MyInfoAtom, MyTokenAtom, ScrollBlockAtom } from '@/store/CommonAtom'
+import { useRecoilState } from 'recoil';
+import { LoadAtom, MyInfoAtom, MyTokenAtom, ScrollBlockAtom } from '@/store/CommonAtom'
 import Link from 'next/link'
 import { useRouter } from 'next/router';
 import Cookie from 'js-cookie'
@@ -65,16 +65,15 @@ export default function NavBar() {
 
   /** redux */
   const [scrollBlock, setScrollBlock] = useRecoilState(ScrollBlockAtom);
-  const [load, setLoad] = useRecoilState(LoadAtom);
+  // const [load, setLoad] = useRecoilState(LoadAtom);
   const [scrollStyle,setScrollStyle] = useState(` `)
 
   // 페이지가 변경되면 모바일 nav메뉴가 닫힘
   const router = useRouter()
   useEffect(() => {
-    console.log('router.pathname', router.pathname)
     setNavActive(false)
     setScrollStyle(``)
-  }, [router.pathname])
+  }, [router.asPath])
   useEffect(() => {
     if(!initialLoaded) return
     setScrollBlock(navActive)
@@ -142,22 +141,25 @@ export default function NavBar() {
             </h2>
             <ul className={`${styles['nav-list']} onlyPC`}>
               <li>
-                <Link href='/board/52/page/1#title'>개발일지</Link>
+                <Link href='/profile' title='프로필'>Profile</Link>
               </li>
               <li>
-                <Link href='/board/214/page/1#title'>일상</Link>
+                <Link href='/board/52/page/1#title' title='개발일지'>개발일지</Link>
               </li>
               <li>
-                <Link href='https://www.gloomy-store.com' target='_blnk'>Portfolio</Link>
+                <Link href='/board/214/page/1#title' title='일상'>일상</Link>
               </li>
+              {/* <li>
+                <Link href='https://www.gloomy-store.com' target='_blank' rel='noreferrer noopener'>Portfolio</Link>
+              </li> */}
               <li>
-                <Link href='/comment/1'>방명록</Link>
+                <Link href='/comment/1' title='방명록'>방명록</Link>
               </li>
               {
                 !isLogin && <li className={styles['join']}>
                 <div>
-                  <Link href='/login'>로그인</Link>
-                  <Link href='/join'>회원가입</Link>
+                  <Link href='/login' title='로그인'>로그인</Link>
+                  <Link href='/join'title='회원가입'>회원가입</Link>
                 </div>
               </li>
               }
@@ -172,9 +174,9 @@ export default function NavBar() {
                 />
                 </button>
                 <div className={styles['submenu']}>
-                  <Link href=':'>회원정보 변경</Link>
-                  <Link href=':'>쪽지함</Link>
-                  <button onClick={logout}>로그아웃</button>
+                  <Link href='#!' title='회원정보 변경'>회원정보 변경</Link>
+                  <Link href='#!'title='쪽지함'>쪽지함</Link>
+                  <button onClick={logout}title='로그아웃'>로그아웃</button>
                   {
                     isAdmin && <Link href='/write'>글쓰기</Link>
                   }
@@ -183,7 +185,7 @@ export default function NavBar() {
               }
             </ul>
             <div className={`${styles['nav-inner']} onlySP`}>
-              <button className={navActive ? `${styles['nav-hamburger']} ${styles['active']} onlySP` : `${styles['nav-hamburger']} onlySP`} onClick={handleNav} title='메뉴 열기/닫기'>
+              <button className={navActive ? `${styles['nav-hamburger']} ${styles['active']} onlySP` : `${styles['nav-hamburger']} onlySP`} onClick={handleNav} title={navActive ? '메뉴 닫기' : '메뉴 열기'}>
                 <span></span>
                 <span></span>
                 <span></span>
@@ -191,22 +193,25 @@ export default function NavBar() {
               <article className={navActive ? `${styles['nav-menu']} ${styles['active']}` : `${styles['nav-menu']}`}>
                 <ul className={`${styles['nav-list-mobile']}`}>
                   <li>
-                    <Link href='/board/52/page/1#title' onClick={() => setNavActive(false)}>개발일지</Link>
+                    <Link href='/profile' title='프로필'>Profile</Link>
                   </li>
                   <li>
-                    <Link href='/board/214/page/1#title' onClick={() => setNavActive(false)}>일상</Link>
+                    <Link href='/board/52/page/1#title' title='개발일지'>개발일지</Link>
                   </li>
                   <li>
-                    <Link href='https://www.gloomy-store.com' target='_blank' rel='noopener' onClick={() => setNavActive(false)}>Portfolio</Link>
+                    <Link href='/board/214/page/1#title' title='일상'>일상</Link>
                   </li>
+                  {/* <li>
+                    <Link href='https://www.gloomy-store.com' target='_blank' rel='noopener' title=''>Portfolio</Link>
+                  </li> */}
                   <li>
-                    <Link href='/comment/1' onClick={() => setNavActive(false)}>방명록</Link>
+                    <Link href='/comment/1' title='방명록'>방명록</Link>
                   </li>
                   {
                     !isLogin && <li className={styles['join']}>
                     <div>
-                      <Link href='/login'>로그인</Link>
-                      <Link href='/join'>회원가입</Link>
+                      <Link href='/login' title='로그인'>로그인</Link>
+                      <Link href='/join' title='회원가입'>회원가입</Link>
                     </div>
                   </li>
                   }
@@ -221,9 +226,9 @@ export default function NavBar() {
                       />
                     </button>
                     <div className={styles['submenu']}>
-                      <Link href=':'>회원정보 변경</Link>
-                      <Link href=':'>쪽지함</Link>
-                      <button onClick={logout}>로그아웃</button>
+                      <Link href='#!' title='회원정보 변경'>회원정보 변경</Link>
+                      <Link href='#!' title='쪽지함'>쪽지함</Link>
+                      <button onClick={logout} title='로그아웃'>로그아웃</button>
                       {
                         isAdmin && <Link href='/write'>글쓰기</Link>
                       }
