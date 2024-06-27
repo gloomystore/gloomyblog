@@ -51,7 +51,7 @@ tG2Xec9HxQVCEMwy4wIDAQAB
 
     try {
       let ip = 'unknown'
-      const ipRes = await axios.get('https://blog.gloomy-store.com/getIp.php');
+      const ipRes = await axios.get('https://www.gloomy-store.com/getIp.php');
       if (ipRes.status === 200) {
         ip = ipRes.data
       }

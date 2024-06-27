@@ -42,7 +42,7 @@ export default function HeadComponent({
         <meta name='naver-site-verification' content='d734660b63628ebd5ba4493a3b3f025cf2f0918c' />
         <meta name='google-site-verification' content='NbgJPXuyN9p7v3DvtB-Qadb7xAc0yay5AGeKgMgi_cc' />
         <link rel='canonical' href={process.env.NEXT_PUBLIC_API_URL + router.asPath} />
-        <noscript>이 포트폴리오는 크로뮴에서 돌리는 것을 권장합니다</noscript>
+        <noscript>이 블로그는 크로뮴, Gecko 환경에서 제일 잘 작동됩니다.</noscript>
       </Head>
     
     </>

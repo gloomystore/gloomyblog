@@ -8,7 +8,7 @@ const nextConfig = {
       //   headers: [
       //     {
       //       key: 'Content-Security-Policy',
-      //       value: "default-src 'self' https://blog.gloomy-store.com; script-src 'self' 'unsafe-eval' https://blog.gloomy-store.com; style-src 'self' 'unsafe-inline' https://blog.gloomy-store.com;",
+      //       value: "default-src 'self' https://www.gloomy-store.com; script-src 'self' 'unsafe-eval' https://www.gloomy-store.com; style-src 'self' 'unsafe-inline' https://www.gloomy-store.com;",
       //     },
       //   ],
       // },

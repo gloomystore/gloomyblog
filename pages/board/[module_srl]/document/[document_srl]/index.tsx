@@ -466,7 +466,7 @@ export default function Document({
     try {
       const data = { ...replyData }
       if(!myInfo && (!data.user_name || !data.password)) return alert('아이디와 비밀번호를 채워주세요')
-      const ip = await axios.get('https://blog.gloomy-store.com/getIp.php')
+      const ip = await axios.get('https://www.gloomy-store.com/getIp.php')
       data.ipaddress = ip.data
       const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/board/${module_srl}/document/${document_srl}/comment/push`, data)
       if(res.status === 200 || res.status === 201) {
@@ -546,7 +546,7 @@ export default function Document({
     try {
       const data = { ...commentData }
       if(!myInfo && (!data.user_name || !data.password)) return alert('아이디와 비밀번호를 채워주세요')
-      const ip = await axios.get('https://blog.gloomy-store.com/getIp.php')
+      const ip = await axios.get('https://www.gloomy-store.com/getIp.php')
       data.ipaddress = ip.data
       const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/board/${module_srl}/document/${document_srl}/comment/push`, data)
       if(res.status === 200 || res.status === 201) {

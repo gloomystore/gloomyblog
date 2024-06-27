@@ -67,7 +67,7 @@ export default function Login () {
       }
     }
   }
-  // https://blog.gloomy-store.com/api/member/Oauth2ClientCallback/naver
+  // https://www.gloomy-store.com/api/member/Oauth2ClientCallback/naver
   // 오어스 컬백주소
 
   return (
