@@ -18,7 +18,6 @@ export default function HeadComponent({
   return (
     <>
       <Head>
-        <title>Create Next App</title>
         <link rel='icon' href='/favicon.ico' />
         <meta charSet='UTF-8' />
         <meta name='format-detection' content='telephone=no' />
@@ -30,13 +29,13 @@ export default function HeadComponent({
         <meta httpEquiv='X-UA-Compatible' content='IE=Edge' />
         <meta name='robots' content={robots ? 'INDEX,FOLLOW,max-snippet:20, max-image-preview:large' : 'NONE'} />
         <meta name='viewport' content='width=device-width, initial-scale=1, minimum-scale=0.25, maximum-scale=4' />
-        <meta name='theme-color' content='pink'/>
+        <meta name='theme-color' content='#4a2766'/>
         
         <meta property='og:type' content='website' /> 
         <meta property='og:title' content={title} />
         <meta property='og:description' content={description} />
         <meta property='og:image' content='https://www.gloomy-store.com/images/logo3.webp' />
-        <meta property='og:url' content='https://www.gloomy-store.com' />
+        <meta property='og:url' content={process.env.NEXT_PUBLIC_API_URL + router.asPath} />
         <link rel='apple-touch-icon' href='/logo192.webp' />
 	      <link rel='manifest' href='/manifest.json' />
         <meta name='naver-site-verification' content='d734660b63628ebd5ba4493a3b3f025cf2f0918c' />
