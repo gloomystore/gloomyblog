@@ -83,7 +83,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx: GetServ
 
     const row:any = documentRows.map(e => ({
       ...e,
-      summary: removeTags(e.content).slice(0, 100),
+      summary: removeTags(e.content).slice(0, 240).replace(/\n/gi, ' '),
       tags: JSON.parse(e.tags)
     }))[0] // 현재 글의 첫 번째(유일한) 행 가져오기
 
@@ -742,7 +742,7 @@ export default function Document({
       <HeadComponent
         title={'글루미스토어 - ' + documents.title}
         description={documents.summary}
-        keywords={`${documents.tags.length ? documents.tags.join(', ') : ''} ${documents?.title?.replace(/\s/gi, ', ')} ${documents?.summary?.replace(/\s/gi, ', ')}`}
+        keywords={`${documents.tags.length ? documents.tags.join(', ') : ''} ${documents?.title?.replace(/\s/gi, ', ')} ${documents?.summary?.slice(0, 100).replace(/\s/gi, ', ')}`}
         
       />
       
