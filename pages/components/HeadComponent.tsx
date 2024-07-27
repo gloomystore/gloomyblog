@@ -18,7 +18,7 @@ export default function HeadComponent({
   return (
     <>
       <Head>
-        <link rel='icon' href='/favicon.ico' />
+        <link rel='icon' type='image/x-icon' href='/favicon.ico' />
         <meta charSet='UTF-8' />
         <meta name='format-detection' content='telephone=no' />
 
