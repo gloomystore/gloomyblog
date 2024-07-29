@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
 function useFirstRender(callback: () => void, deps: any[]) {
   const isFirstRender = useRef(false)
@@ -85,7 +85,7 @@ function GloomyTags({
   useFirstRender(() => {
     setState && setState(state)
   }, [state])
-  const ENTER_KEYS = ['Enter']
+  const ENTER_KEYS = ['Enter', ' ']
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if(timeout) return
     setTimeout(() => timeout = undefined , timeout)
@@ -155,6 +155,7 @@ function GloomyTags({
           line-height: 1.4;
           padding: var(--glt-s);
           width: 400px;
+          cursor: text;
           @media(max-width: 600px) {
             width: 100%;
           }
@@ -193,8 +194,13 @@ function GloomyTags({
     }
   }, [style])
 
+  const cursorToInput = useCallback((e:any) => {
+    if(!inputRef.current || e.target.className !== 'glt--container') return
+    inputRef.current.focus()
+  }, [inputRef.current])
+
   return (
-    <div className='glt--container'>
+    <div className='glt--container' onClick={cursorToInput}>
       {state.map((tag) => (
         <Tag
           key={tag}
